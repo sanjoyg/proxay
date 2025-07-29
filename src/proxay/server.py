@@ -14,12 +14,12 @@ from .rewrite import RewriteRules
 from .sender import send
 from .tape import TapeRecord
 
+DEFAULT_TAPE_NAMESPACE = "proxay"
 
 class RecordReplayServer:
     def __init__(
         self,
         initial_mode: Mode,
-        tape_namespace: Optional[str],
         default_tape_name: str,
         host: Optional[str],
         redis_host: str = "localhost",
@@ -36,7 +36,7 @@ class RecordReplayServer:
         debug_matcher_fails: bool = False,
     ):
         self.mode = initial_mode
-        self.tape_namespace = tape_namespace
+        self.tape_namespace = DEFAULT_TAPE_NAMESPACE
         self.proxied_host = host
         self.proxy_port_to_send = proxy_port_to_send
         self.timeout = timeout
@@ -50,7 +50,7 @@ class RecordReplayServer:
 
         self.persistence = Persistence(self.redis_client, self.redact_headers)
 
-        self.default_tape = default_tape_name
+        self.default_tape = self._get_full_tape_name(default_tape_name)
         self.prevent_conditional_requests = prevent_conditional_requests
         self.rewrite_before_diff_rules = rewrite_before_diff_rules or RewriteRules()
         self.ignore_headers = ignore_headers or []
@@ -67,10 +67,7 @@ class RecordReplayServer:
         self.setup_routes()
 
     def _get_full_tape_name(self, tape_name: str) -> str:
-        """Constructs the full tape name including the namespace."""
-        if self.tape_namespace:
-            return f"{self.tape_namespace}:{tape_name}"
-        return tape_name
+        return f"{self.tape_namespace}:{tape_name}"
 
     def setup_routes(self):
         @self.app.get("/__proxay")
@@ -89,7 +86,7 @@ class RecordReplayServer:
 
             if tape_name:
                 full_tape_name = self._get_full_tape_name(tape_name)
-                if not self.persistence.is_tape_name_valid(tape_name): # a short name is fine
+                if not self.persistence.is_tape_name_valid(tape_name):
                     return Response(f"Invalid tape name: {tape_name}", status_code=403)
                 if self.load_tape(full_tape_name):
                     return Response(f"Updated tape: {full_tape_name}", status_code=200)

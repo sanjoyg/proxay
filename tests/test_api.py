@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-from proxay.server import RecordReplayServer
+from proxay.server import RecordReplayServer, DEFAULT_TAPE_NAMESPACE
 
 
 @pytest.mark.asyncio
@@ -10,44 +10,41 @@ async def test_tape_switching_api(backend_server_url, proxay_server_runner, fake
     Tests that the /__proxay/tape endpoint can switch tapes and modes.
     """
     proxay_port = 9004
-    namespace = "test-api-ns"
-    default_tape_short_name = "default_tape"
-    default_tape_full_name = f"{namespace}:{default_tape_short_name}"
+    default_tape = "default_tape"
+    full_default_tape = f"{DEFAULT_TAPE_NAMESPACE}:{default_tape}"
 
     # 1. Start in record mode on a default tape
     server = RecordReplayServer(
         initial_mode="record",
-        tape_namespace=namespace,
-        default_tape_name=default_tape_full_name,
+        default_tape_name=default_tape,
         host=backend_server_url,
         redis_client=fake_redis,
     )
-    server.load_tape(default_tape_full_name)
     proxay_url = proxay_server_runner(server, proxay_port)
 
     # Record a request to the default tape
     requests.get(f"{proxay_url}/default")
-    assert fake_redis.exists(default_tape_full_name)
-    assert fake_redis.llen(default_tape_full_name) == 1
+    assert fake_redis.exists(full_default_tape)
+    assert fake_redis.llen(full_default_tape) == 1
 
     # 2. Switch to a new tape via the API
-    new_tape_short_name = "new_tape"
-    new_tape_full_name = f"{namespace}:{new_tape_short_name}"
-    switch_payload = {"tape": new_tape_short_name}
+    new_tape = "new_tape"
+    full_new_tape = f"{DEFAULT_TAPE_NAMESPACE}:{new_tape}"
+    switch_payload = {"tape": new_tape}
     response = requests.post(f"{proxay_url}/__proxay/tape", json=switch_payload)
     assert response.status_code == 200
-    assert response.text == f"Updated tape: {new_tape_full_name}"
+    assert response.text == f"Updated tape: {full_new_tape}"
 
-    assert not fake_redis.exists(new_tape_full_name)
+    assert not fake_redis.exists(full_new_tape)
 
     # 3. Record a request to the new tape
     requests.get(f"{proxay_url}/new")
-    assert fake_redis.exists(new_tape_full_name)
-    assert fake_redis.llen(new_tape_full_name) == 1
-    assert fake_redis.llen(default_tape_full_name) == 1
+    assert fake_redis.exists(full_new_tape)
+    assert fake_redis.llen(full_new_tape) == 1
+    assert fake_redis.llen(full_default_tape) == 1
 
     # 4. Switch mode to replay via the API
-    mode_switch_payload = {"tape": new_tape_short_name, "mode": "replay"}
+    mode_switch_payload = {"tape": new_tape, "mode": "replay"}
     response = requests.post(f"{proxay_url}/__proxay/tape", json=mode_switch_payload)
     assert response.status_code == 200
 

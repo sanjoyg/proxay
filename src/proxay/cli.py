@@ -48,12 +48,8 @@ def main():
         help="Operating mode."
     )
     parser.add_argument(
-        "--tape-namespace", type=str,
-        help="A required namespace for tapes in Redis (e.g., 'my-app-tests')."
-    )
-    parser.add_argument(
         "--default-tape", type=str, default="default",
-        help="Name of the default tape within the namespace."
+        help="Name of the default tape to use."
     )
     parser.add_argument(
         "--host", type=str,
@@ -110,11 +106,8 @@ def main():
     args = parser.parse_args()
 
     # --- Validations ---
-    if args.mode != "passthrough" and not args.tape_namespace:
-        cprint("Error: --tape-namespace is required for modes other than passthrough.", "red", file=sys.stderr)
-        sys.exit(1)
-    if args.mode not in ["replay"] and not args.host:
-        cprint("Error: --host is required for record, mimic, and passthrough modes.", "red", file=sys.stderr)
+    if args.mode not in ["replay", "passthrough"] and not args.host:
+        cprint("Error: --host is required for record and mimic modes.", "red", file=sys.stderr)
         sys.exit(1)
     if args.host and "://" not in args.host:
         cprint("Error: Please include the scheme (http:// or https://) in the host.", "red", file=sys.stderr)
@@ -125,13 +118,9 @@ def main():
 
     rewrite_rules = RewriteRules(args.rewrite_before_diff)
 
-    # Construct a namespaced tape name
-    default_tape_full_name = f"{args.tape_namespace}:{args.default_tape}" if args.tape_namespace else args.default_tape
-
     server = RecordReplayServer(
         initial_mode=args.mode,
-        tape_namespace=args.tape_namespace,
-        default_tape_name=default_tape_full_name,
+        default_tape_name=args.default_tape,
         host=args.host,
         proxy_port_to_send=args.port if args.send_proxy_port else None,
         redact_headers=args.redact_headers,

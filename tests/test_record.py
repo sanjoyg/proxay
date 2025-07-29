@@ -4,7 +4,7 @@ import msgpack
 import pytest
 import requests
 
-from proxay.server import RecordReplayServer
+from proxay.server import RecordReplayServer, DEFAULT_TAPE_NAMESPACE
 
 
 @pytest.mark.asyncio
@@ -13,19 +13,16 @@ async def test_record_simple_get_request(backend_server_url, proxay_server_runne
     Tests that a simple GET request is recorded correctly.
     """
     proxay_port = 9001
-    namespace = "test-ns"
     tape_name = "test_record"
-    full_tape_name = f"{namespace}:{tape_name}"
+    full_tape_name = f"{DEFAULT_TAPE_NAMESPACE}:{tape_name}"
 
     server = RecordReplayServer(
         initial_mode="record",
-        tape_namespace=namespace,
-        default_tape_name=full_tape_name,
+        default_tape_name=tape_name,
         host=backend_server_url,
         redact_headers=["user-agent", "accept-encoding"],
         redis_client=fake_redis,
     )
-    server.load_tape(full_tape_name)
 
     proxay_url = proxay_server_runner(server, proxay_port)
 

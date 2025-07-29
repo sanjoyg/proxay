@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-from proxay.server import RecordReplayServer
+from proxay.server import RecordReplayServer, DEFAULT_TAPE_NAMESPACE
 
 
 @pytest.mark.asyncio
@@ -10,20 +10,17 @@ async def test_mimic_mode(backend_server_url, proxay_server_runner, fake_redis):
     Tests that mimic mode records the first time and replays the second time.
     """
     proxay_port = 9003
-    namespace = "test-mimic-ns"
     tape_name = "test_mimic"
-    full_tape_name = f"{namespace}:{tape_name}"
+    full_tape_name = f"{DEFAULT_TAPE_NAMESPACE}:{tape_name}"
     path = "/mimic-test"
 
     # 1. Setup Proxay in mimic mode with an empty tape
     server = RecordReplayServer(
         initial_mode="mimic",
-        tape_namespace=namespace,
-        default_tape_name=full_tape_name,
+        default_tape_name=tape_name,
         host=backend_server_url,
         redis_client=fake_redis,
     )
-    server.load_tape(full_tape_name)
     proxay_url = proxay_server_runner(server, proxay_port)
 
     # 2. Make the first request - this should be recorded

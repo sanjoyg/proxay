@@ -1,0 +1,26 @@
+{
+	"name": "Proxay Dev Container",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"python.pythonPath": "/usr/local/bin/python",
+				"python.linting.pylintEnabled": true,
+				"python.linting.enabled": true,
+				"python.formatting.provider": "black"
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-azuretools.vscode-docker",
+				"eamodio.gitlens"
+			]
+		}
+	},
+	"forwardPorts": [3000, 8081],
+	"postCreateCommand": "pip install -r requirements.txt -r requirements-dev.txt",
+	"remoteUser": "vscode"
+}
