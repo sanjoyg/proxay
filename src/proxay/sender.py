@@ -16,8 +16,6 @@ def send(
 ) -> TapeRecord:
     url = f"{host.rstrip('/')}{request.path}"
 
-    # The original code filters some headers. `requests` handles many of these,
-    # but we will be explicit for 'host' and 'content-length'.
     headers_to_send = CaseInsensitiveDict(request.headers)
     if "host" in headers_to_send:
         del headers_to_send["host"]
@@ -36,16 +34,27 @@ def send(
             url=url,
             headers=headers_to_send,
             data=request.body,
-            timeout=timeout / 1000,  # requests uses seconds
+            timeout=timeout / 1000,
             allow_redirects=False,
-            verify=False,  # To mimic original behavior of allowing self-signed certs
+            verify=False,
         )
 
-        response_headers = {k: v for k, v in response.headers.items()}
+        # The `requests` library automatically decompresses the response body.
+        # We must remove the content-encoding header to prevent our code from
+        # trying to decompress it again. We also remove content-length
+        # as it will be incorrect for the decompressed body.
+        response_headers = CaseInsensitiveDict(response.headers)
+        if "content-encoding" in response_headers:
+            del response_headers["content-encoding"]
+        if "content-length" in response_headers:
+            del response_headers["content-length"]
+
+        # Convert back to a standard dict for serialization
+        final_headers = dict(response_headers)
 
         http_response = HttpResponse(
             status=HttpStatus(code=response.status_code),
-            headers=response_headers,
+            headers=final_headers,
             body=response.content,
         )
 
@@ -54,10 +63,9 @@ def send(
     except requests.exceptions.RequestException as e:
         if logging_enabled:
             print(f"Error sending request to {url}: {e}")
-        # Create a synthetic 500 error response
         error_response = HttpResponse(
-            status=HttpStatus(code=500),
+            status=HttpStatus(code=502),
             headers={"Content-Type": "text/plain"},
-            body=str(e).encode("utf-8"),
+            body=f"Error connecting to proxied host: {e}".encode("utf-8"),
         )
         return TapeRecord(request=request, response=error_response)
