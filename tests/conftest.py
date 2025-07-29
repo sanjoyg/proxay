@@ -21,7 +21,6 @@ class UvicornTestServer(threading.Thread):
 
     def start(self):
         super().start()
-        # Wait for the server to start by checking if the server has started
         while not self.server.started:
             time.sleep(0.01)
 
@@ -58,5 +57,8 @@ def proxay_server_runner():
 
 @pytest.fixture
 def fake_redis():
-    """Provides a FakeRedis instance for tests, configured to decode responses."""
-    return FakeRedis(decode_responses=True)
+    """
+    Provides a FakeRedis instance for tests.
+    decode_responses is set to False to handle binary data like msgpack correctly.
+    """
+    return FakeRedis(decode_responses=False)

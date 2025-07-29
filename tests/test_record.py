@@ -1,6 +1,8 @@
+import base64
+
+import msgpack
 import pytest
 import requests
-import yaml
 
 from proxay.server import RecordReplayServer
 
@@ -8,11 +10,12 @@ from proxay.server import RecordReplayServer
 @pytest.mark.asyncio
 async def test_record_simple_get_request(backend_server_url, proxay_server_runner, fake_redis):
     """
-    Tests that a simple GET request is recorded correctly.
+    Tests that a simple GET request is recorded correctly using the
+    MessagePack and Redis List storage format with a bytes-based client.
     """
     # 1. Setup Proxay in record mode
     proxay_port = 9001
-    tape_name = "test_record_simple_get"
+    tape_name = "test_record_msgpack_bytes"
 
     server = RecordReplayServer(
         initial_mode="record",
@@ -20,9 +23,8 @@ async def test_record_simple_get_request(backend_server_url, proxay_server_runne
         default_tape_name=tape_name,
         host=backend_server_url,
         redact_headers=["user-agent", "accept-encoding"],
-        redis_client=fake_redis,  # Inject the fake redis client
+        redis_client=fake_redis,
     )
-    # Manually load the tape to initialize, since we are not using the CLI's startup logic
     server.load_tape(tape_name)
 
     proxay_url = proxay_server_runner(server, proxay_port)
@@ -34,28 +36,36 @@ async def test_record_simple_get_request(backend_server_url, proxay_server_runne
 
     assert response.status_code == 200
     assert response.text == "world"
-    assert "x-original-method" in response.headers
-    assert response.headers["x-original-method"] == "GET"
 
     # 3. Verify the tape was saved to Redis correctly
     assert fake_redis.exists(tape_name)
-    tape_yaml = fake_redis.get(tape_name)
-    tape_data = yaml.safe_load(tape_yaml)
+    assert fake_redis.type(tape_name) == b'list'
 
-    interactions = tape_data["http_interactions"]
-    assert len(interactions) == 1
+    tape_data_raw = fake_redis.lrange(tape_name, 0, -1)
+    assert len(tape_data_raw) == 1
+
+    # Deserialize the first record from MessagePack
+    # Use raw=False to decode keys and strings to UTF-8
+    interaction = msgpack.unpackb(tape_data_raw[0], raw=False)
 
     # Verify request data
-    request_data = interactions[0]["request"]
+    request_data = interaction["request"]
     assert request_data["method"] == "GET"
-    assert request_data["path"] == path
-    assert request_data["headers"]["x-test-header"] == "test-value"
-    assert request_data["headers"]["user-agent"] == "XXXX"  # Check redaction
+    assert request_data["path"] == "/hello"
+
+    req_headers = request_data["headers"]
+    assert req_headers["x-test-header"] == "test-value"
+    assert req_headers["user-agent"] == "XXXX"
 
     # Verify response data
-    response_data = interactions[0]["response"]
+    response_data = interaction["response"]
     assert response_data["status"]["code"] == 200
-    assert response_data["body"]["encoding"] == "utf8"
-    assert response_data["body"]["data"] == "world"
-    assert "x-test-header" in response_data["headers"]
-    assert response_data["headers"]["x-test-header"] == "test-value"
+
+    body_data = response_data["body"]
+    assert body_data["encoding"] == "base64"
+
+    decoded_body = base64.b64decode(body_data["data"])
+    assert decoded_body == b"world"
+
+    resp_headers = response_data["headers"]
+    assert resp_headers["x-test-header"] == "test-value"

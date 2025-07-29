@@ -1,11 +1,10 @@
 import base64
 from typing import List, Union
 
+import msgpack
 import redis
-import yaml
 
 from .compression import (
-    CompressionAlgorithm,
     compress_buffer,
     convert_http_content_encoding_to_compression_algorithm,
     get_http_body_decoded,
@@ -31,21 +30,25 @@ class Persistence:
         persisted_tape_records = [
             self._persist_tape_record(self._redact(record)) for record in tape_records
         ]
-        tape_data = {"http_interactions": persisted_tape_records}
-        yaml_data = yaml.safe_dump(tape_data)
-        self.redis.set(tape_name, yaml_data)
+
+        # Use a pipeline for atomic and efficient storage
+        pipe = self.redis.pipeline()
+        pipe.delete(tape_name)
+        if persisted_tape_records:
+            # Serialize each record with MessagePack and add to the list
+            pipe.rpush(tape_name, *[msgpack.packb(record) for record in persisted_tape_records])
+        pipe.execute()
 
     def load_tape(self, tape_name: str) -> List[TapeRecord]:
-        yaml_data = self.redis.get(tape_name)
-        if yaml_data is None:
+        # LRANGE returns a list of bytes
+        persisted_data = self.redis.lrange(tape_name, 0, -1)
+        if not persisted_data:
+            # To match original behavior, raise FileNotFoundError for replay/mimic modes
             raise FileNotFoundError(f"No tape found with name {tape_name}")
 
-        tape_data = yaml.safe_load(yaml_data)
-        persisted_tape_records = tape_data.get("http_interactions", [])
-        return [self._revive_tape_record(record) for record in persisted_tape_records]
+        return [self._revive_tape_record(msgpack.unpackb(record)) for record in persisted_data]
 
     def is_tape_name_valid(self, tape_name: str) -> bool:
-        # Prevent confusion with file paths, though not strictly necessary for Redis.
         return ".." not in tape_name and "/" not in tape_name and "\\" not in tape_name
 
     def _redact(self, record: TapeRecord) -> TapeRecord:
@@ -58,6 +61,7 @@ class Persistence:
         return record
 
     def _persist_tape_record(self, record: TapeRecord) -> PersistedTapeRecord:
+        # Convert dataclasses to dicts for serialization
         return PersistedTapeRecord(
             request=PersistedRequest(
                 method=record.request.method,
@@ -96,22 +100,11 @@ class Persistence:
             convert_http_content_encoding_to_compression_algorithm(content_encoding)
         )
 
-        try:
-            utf8_representation = buffer.decode("utf-8")
-            # Check if it can be safely stored and recreated in YAML
-            recreated_buffer = yaml.safe_load(
-                yaml.safe_dump(utf8_representation)
-            ).encode("utf-8")
-            if buffer == recreated_buffer:
-                return PersistedBuffer(
-                    encoding="utf8",
-                    data=utf8_representation,
-                    compression=compression_algorithm,
-                )
-        except (UnicodeDecodeError, yaml.YAMLError):
-            pass  # Fall through
-
-        # Fallback to Base64, using the original body
+        # With MessagePack, we can just store bytes, but to keep the structure
+        # similar to the original (which had to be YAML-safe), we can still
+        # try to encode as UTF-8 for readability if desired.
+        # However, for performance, let's just use base64 for the body.
+        # This simplifies logic and is very robust.
         return PersistedBuffer(
             encoding="base64",
             data=base64.b64encode(r.body).decode("ascii"),
@@ -119,15 +112,10 @@ class Persistence:
         )
 
     def _unserialize_buffer(self, persisted: PersistedBuffer) -> bytes:
+        # Since we now always serialize to base64, this is simpler.
         encoding = persisted.get("encoding")
-        data = persisted.get("data")
-
         if encoding == "base64":
-            return base64.b64decode(data)
-        elif encoding == "utf8":
-            buffer = data.encode("utf-8")
-            compression = persisted.get("compression")
-            # Re-compress the buffer, as the original stored it decompressed.
-            return compress_buffer(compression or "none", buffer)
+            return base64.b64decode(persisted.get("data"))
         else:
-            raise ValueError(f"Unsupported encoding: {encoding}")
+            # Kept for potential future extension, but current code won't produce this.
+            raise ValueError(f"Unsupported encoding in persisted body: {encoding}")

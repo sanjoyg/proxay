@@ -45,7 +45,8 @@ class RecordReplayServer:
         if redis_client:
             self.redis_client = redis_client
         else:
-            self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
+            # decode_responses=False is the default and is what we need to work with binary msgpack data.
+            self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
 
         self.persistence = Persistence(self.redis_client, self.redact_headers)
 

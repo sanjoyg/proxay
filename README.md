@@ -17,31 +17,31 @@ Proxay is language-agnostic: it's just a server. Your code doesn't need to be wr
 ## Prerequisites
 
 - Python 3.9+
-- [Poetry](https://python-poetry.org/) for dependency management.
 - A running [Redis](https://redis.io/) instance.
 
 ## Installing
 
-Clone the repository and install the dependencies using Poetry:
+It is recommended to install the dependencies in a virtual environment.
+
 ```sh
-git clone https://github.com/airtasker/proxay.git
-cd proxay
-poetry install
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Running
 
-The main command is now run through `poetry run proxay`. You must have a Redis server running.
+The main command is run via `python -m src.proxay.cli`. You must have a Redis server running.
 
 ```sh
 # Record mode (proxies requests)
-poetry run proxay --mode record --host https://api.website.com --tapes-dir my-app-tapes
+python -m src.proxay.cli --mode record --host https://api.website.com --tapes-dir my-app-tapes
 
 # Replay mode (no proxying)
-poetry run proxay --mode replay --tapes-dir my-app-tapes
+python -m src.proxay.cli --mode replay --tapes-dir my-app-tapes
 
 # Passthrough mode (proxies requests without persisting)
-poetry run proxay --mode passthrough --host https://api.website.com
+python -m src.proxay.cli --mode passthrough --host https://api.website.com
 ```
 
 **Note on `--tapes-dir`**: In this Python version, this parameter is used as a *namespace* for tapes within Redis, not as a filesystem directory. It's a required parameter for any mode that interacts with tapes.
@@ -84,15 +84,3 @@ The use case remains the same as the original Proxay. By recording interactions 
 ## Comparison with alternatives
 
 The comparisons with `node-replay`, `yakbak`, `vcr`, and `MockServer` from the original README still apply. Proxay-py's main differentiator is being a standalone proxy server, now powered by Python and Redis.
-
----
-
-## Releasing a new version of Proxay (for contributors)
-
-To release a new version of Proxay:
-
-1.  Create a new branch.
-2.  Update the `version` field in `pyproject.toml`.
-3.  Send a PR with the changes.
-4.  Merge the PR into master.
-5.  Create a release on GitHub with a tag `v[version]`.
