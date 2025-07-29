@@ -22,4 +22,4 @@ ENTRYPOINT ["python", "-m", "proxay.cli"]
 
 # Example:
 # docker build -t proxay .
-# docker run --rm -it --network=host proxay --mode record --host http://host.docker.internal:8080 --tape-namespace my-tapes --redis-host host.docker.internal
+# docker run --rm -it --network=host proxay --mode record --host http://host.docker.internal:8080 --redis-host host.docker.internal
