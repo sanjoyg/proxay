@@ -7,12 +7,19 @@ from .http import HttpRequest, HttpResponse
 CompressionAlgorithm = Literal["gzip", "brotli", "none"]
 
 def decompress_buffer(algorithm: CompressionAlgorithm, buffer: bytes) -> bytes:
-    if algorithm == "gzip":
-        # The wbits parameter with 32 enables automatic detection of gzip or zlib headers.
-        return zlib.decompress(buffer, wbits=16+zlib.MAX_WBITS)
-    elif algorithm == "brotli":
-        return brotli.decompress(buffer)
-    # "none" or other cases
+    """Decompresses a buffer, handling potential errors gracefully."""
+    if not buffer or algorithm == "none":
+        return buffer
+
+    try:
+        if algorithm == "gzip":
+            return zlib.decompress(buffer, wbits=16 + zlib.MAX_WBITS)
+        elif algorithm == "brotli":
+            return brotli.decompress(buffer)
+    except (zlib.error, brotli.error):
+        # If decompression fails, the Content-Encoding header was likely incorrect.
+        return buffer
+
     return buffer
 
 def compress_buffer(algorithm: CompressionAlgorithm, buffer: bytes) -> bytes:
@@ -20,25 +27,21 @@ def compress_buffer(algorithm: CompressionAlgorithm, buffer: bytes) -> bytes:
         return zlib.compress(buffer)
     elif algorithm == "brotli":
         return brotli.compress(buffer)
-    # "none" or other cases
     return buffer
 
 def get_http_content_encoding(r: Union[HttpRequest, HttpResponse]) -> str | None:
-    # Headers are case-insensitive
     for key, value in r.headers.items():
         if key.lower() == "content-encoding":
-            # In http.server, headers are a single string.
-            # In 'requests', it's a string.
-            # My HttpHeaders type hint allows for list, so I'll handle it.
             if isinstance(value, list):
                 return value[0] if value else None
             return value
     return None
 
 def convert_http_content_encoding_to_compression_algorithm(encoding: str | None) -> CompressionAlgorithm:
-    if encoding == "gzip":
+    encoding_lower = (encoding or "").lower()
+    if encoding_lower == "gzip":
         return "gzip"
-    elif encoding == "br":
+    elif encoding_lower == "br":
         return "brotli"
     return "none"
 

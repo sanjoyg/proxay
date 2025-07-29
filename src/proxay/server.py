@@ -148,7 +148,7 @@ class RecordReplayServer:
                     return Response("No matching record found for replay.", status_code=500)
             except Exception as e:
                 if self.verbose:
-                    cprint(f"Unexpected error: {e}", "red", force=True)
+                    cprint(f"Unexpected error: {e}", "red")
                 return Response("Internal Server Error", status_code=500)
 
     def rewrite_request(self, request: HttpRequest):
