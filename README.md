@@ -10,22 +10,27 @@ Proxay (pronounced "prokseï") is a proxy server that helps you write faster tes
 - **Mimic mode**: Records requests the first time, then replays them on subsequent calls.
 - **Passthrough mode**: A conventional proxy that doesn't persist anything.
 - **Optimized Storage**: Uses MessagePack for fast serialization and Redis Lists for efficient storage.
+- **Verbose Stats**: In mimic mode, provides console stats on cache hits/misses when run with `--verbose`.
 
 ## Prerequisites
 - Docker and Docker Compose
-- A running [Redis](https://redis.io/) instance.
 
-## Development Environment
+## Running with Docker Compose (Recommended)
 
-The recommended way to develop and contribute to this project is by using the provided Dev Container, which can be opened in VS Code.
+The easiest way to run Proxay and its Redis dependency is with Docker Compose.
 
-1.  Make sure you have the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) installed in VS Code.
-2.  Open the repository in VS Code.
-3.  When prompted, click "Reopen in Container".
+1.  **Modify the command in `docker-compose.yml`:**
+    Open the `docker-compose.yml` file and edit the `command` section to suit your needs (e.g., change the `--host`, `--mode`, etc.).
 
-This will build the development environment, install all dependencies, and configure your VS Code instance. You can run the server and tests directly from the integrated terminal.
+2.  **Run the services:**
+    ```sh
+    docker-compose up --build
+    ```
+    This will build the Proxay image, start both the Proxay and Redis containers, and connect them.
 
-## Running with Docker
+## Advanced Usage (without Docker Compose)
+
+### Running with Docker
 
 1.  **Build the Docker image:**
     ```sh
@@ -34,16 +39,15 @@ This will build the development environment, install all dependencies, and confi
 
 2.  **Run the container:**
     ```sh
-    # Example: Record mode
     docker run --rm -it --network=host proxay \
         --mode record \
         --host http://localhost:8080 \
         --redis-host localhost
     ```
 
-## Testing
+### Testing
 
-### Running Tests with Docker
+A dedicated test container can be used to run all tests.
 
 1.  **Build the test image:**
     ```sh
@@ -55,26 +59,13 @@ This will build the development environment, install all dependencies, and confi
     docker run --rm -it proxay-test
     ```
 
-### Running Tests Locally
-
-1.  **Set up environment and install dependencies:**
-    ```sh
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt -r requirements-dev.txt
-    ```
-
-2.  **Run the tests:**
-    ```sh
-    PYTHONPATH=src pytest --cov=src/proxay
-    ```
-
 ## Options
 - `--host`: The target host to proxy requests to.
 - `--port`: The local port for Proxay to run on (default: `3000`).
 - `--default-tape`: The name of the default tape to use (default: `default`).
 - `--redis-host`: The Redis server host (default: `localhost`).
 - `--redis-port`: The Redis server port (default: `6379`).
+- `-v`, `--verbose`: Enable verbose logging, including mimic mode stats.
 - `-r, --redact-headers`: Comma-separated list of request headers to redact.
 - `--ignore-headers`: Comma-separated list of headers to ignore during matching.
 - `--exact-request-matching`: Disables fuzzy matching.
