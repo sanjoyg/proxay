@@ -9,6 +9,3 @@ deepdiff==6.7.1
 thefuzz[speedup]==0.20.0
 brotli==1.1.0
 msgpack==1.0.8
-pytest==8.4.1
-fakeredis==2.30.2
-pytest-asyncio==0.23.8

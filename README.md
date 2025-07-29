@@ -12,9 +12,7 @@ Proxay (pronounced "prokseï") is a proxy server that helps you write faster tes
 - **Optimized Storage**: Uses MessagePack for fast serialization and Redis Lists for efficient storage.
 
 ## Prerequisites
-
-- Python 3.9+ (for local development)
-- Docker (for containerized deployment)
+- Docker and Docker Compose
 - A running [Redis](https://redis.io/) instance.
 
 ## Running with Docker (Recommended)
@@ -26,7 +24,6 @@ Proxay (pronounced "prokseï") is a proxy server that helps you write faster tes
 
 2.  **Run the container:**
     You need to connect the container to the same network as your backend service and Redis. Using `--network=host` is often the simplest way for local development.
-
     ```sh
     # Example: Record mode
     docker run --rm -it --network=host proxay \
@@ -35,48 +32,61 @@ Proxay (pronounced "prokseï") is a proxy server that helps you write faster tes
         --tape-namespace my-app-tests \
         --redis-host localhost
     ```
-    *Note: If your backend is running on the host machine from the container's perspective, you might need to use `http://host.docker.internal:PORT` instead of `http://localhost:PORT` for the `--host` argument, depending on your Docker setup.*
 
-## Local Development Setup
+## Testing
 
-1.  **Create a virtual environment:**
+This project includes a comprehensive test suite.
+
+### Running Tests with Docker (Recommended)
+
+A dedicated test container can be used to run all tests in a clean environment.
+
+1.  **Build the test image:**
+    ```sh
+    docker build -f Dockerfile.test -t proxay-test .
+    ```
+
+2.  **Run the tests:**
+    This will run `pytest` and output a coverage report.
+    ```sh
+    docker run --rm -it proxay-test
+    ```
+
+### Running Tests Locally
+
+1.  **Create a virtual environment and install dependencies:**
     ```sh
     python -m venv .venv
     source .venv/bin/activate
+    pip install -r requirements.txt -r requirements-dev.txt
     ```
 
-2.  **Install dependencies:**
+2.  **Run the tests:**
     ```sh
-    pip install -r requirements.txt
+    PYTHONPATH=src pytest --cov=src/proxay
     ```
 
-3.  **Run the application:**
-    ```sh
-    # Example: Record mode
-    PYTHONPATH=src python -m src.proxay.cli \
-        --mode record \
-        --host http://localhost:8080 \
-        --tape-namespace my-app-tests
-    ```
+## Local Development
+If you need to run the server outside of Docker for development:
 
-## Specifying a Tape
-
-You can dynamically switch tapes within the current namespace by sending a `POST` request to the `/__proxay/tape` endpoint:
-```json
-{
-  "tape": "my-specific-test",
-  "mode": "replay"
-}
+```sh
+# Set up environment and install dependencies as per "Running Tests Locally"
+# Then run the server:
+PYTHONPATH=src python -m src.proxay.cli \
+    --mode record \
+    --host http://localhost:8080 \
+    --tape-namespace my-app-tests
 ```
 
 ## Options
-- `--host`: The target host to proxy requests to (e.g., `https://api.example.com`).
+- `--host`: The target host to proxy requests to.
 - `--port`: The local port for Proxay to run on (default: `3000`).
 - `--tape-namespace`: A required namespace for your tapes in Redis.
 - `--default-tape`: The name of the default tape within the namespace (default: `default`).
 - `--redis-host`: The Redis server host (default: `localhost`).
 - `--redis-port`: The Redis server port (default: `6379`).
+- `-r, --redact-headers`: Comma-separated list of request headers to redact.
+- `--ignore-headers`: Comma-separated list of headers to ignore during matching.
+- `--exact-request-matching`: Disables fuzzy matching.
 - `--send-proxy-port`: Forwards Proxay's port in the `Host` header.
-- `--exact-request-matching`: Disables fuzzy matching and only replays exact matches.
-- `-r, --redact-headers`: A comma-separated list of request headers to redact (replace with `XXXX`).
-- `--ignore-headers`: A comma-separated list of headers to ignore during matching.
+- `--debug-matcher-fails`: Provides debug information on failed matches.

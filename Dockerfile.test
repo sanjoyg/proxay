@@ -1,0 +1,19 @@
+# Start from the base image defined in the main Dockerfile
+# This ensures the test environment is as close to production as possible.
+FROM python:3.11-slim as base
+
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+ENV PYTHONPATH /usr/src/app/src
+
+# Create a new stage for testing
+FROM base as test
+
+# Install test dependencies
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Set the entrypoint to run pytest with coverage
+ENTRYPOINT ["pytest", "--cov=src/proxay"]
