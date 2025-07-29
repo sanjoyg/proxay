@@ -65,6 +65,10 @@ def main():
     parser.add_argument(
         "--redis-port", type=int, default=6379, help="Redis server port."
     )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true",
+        help="Enable verbose logging, including mimic mode stats."
+    )
 
     # Other options
     parser.add_argument(
@@ -122,6 +126,7 @@ def main():
         initial_mode=args.mode,
         default_tape_name=args.default_tape,
         host=args.host,
+        enable_logging=args.verbose,
         proxy_port_to_send=args.port if args.send_proxy_port else None,
         redact_headers=args.redact_headers,
         prevent_conditional_requests=args.prevent_conditional_requests,

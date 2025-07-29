@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import redis
@@ -12,9 +13,11 @@ from .modes import Mode
 from .persistence import Persistence
 from .rewrite import RewriteRules
 from .sender import send
+from proxay import stats
 from .tape import TapeRecord
 
 DEFAULT_TAPE_NAMESPACE = "proxay"
+
 
 class RecordReplayServer:
     def __init__(
@@ -27,7 +30,7 @@ class RecordReplayServer:
         redis_client: Optional[redis.Redis] = None,
         proxy_port_to_send: Optional[int] = None,
         timeout: int = 5000,
-        enable_logging: bool = True,
+        enable_logging: bool = False,
         redact_headers: Optional[List[str]] = None,
         prevent_conditional_requests: bool = False,
         rewrite_before_diff_rules: Optional[RewriteRules] = None,
@@ -40,7 +43,7 @@ class RecordReplayServer:
         self.proxied_host = host
         self.proxy_port_to_send = proxy_port_to_send
         self.timeout = timeout
-        self.logging_enabled = enable_logging
+        self.verbose = enable_logging
         self.redact_headers = redact_headers or []
 
         if redis_client:
@@ -61,10 +64,32 @@ class RecordReplayServer:
         self.current_tape: str = ""
         self.replayed_tapes: List[TapeRecord] = []
 
+        self.stats_collector = stats.MimicStatsCollector(verbose=self.verbose)
+        self.reporter_task: Optional[asyncio.Task] = None
+        self.shutdown_event = asyncio.Event()
+
         self.load_tape(self.default_tape)
 
-        self.app = FastAPI()
+        self.app = FastAPI(lifespan=self.lifespan)
         self.setup_routes()
+
+    @asynccontextmanager
+    async def lifespan(self, app: FastAPI):
+        # Startup logic
+        if self.mode == "mimic":
+            self.shutdown_event.clear()
+            self.reporter_task = asyncio.create_task(
+                stats.periodic_reporter(self.stats_collector, self.shutdown_event)
+            )
+        yield
+        # Shutdown logic
+        if self.reporter_task:
+            self.shutdown_event.set()
+            try:
+                await asyncio.wait_for(self.reporter_task, timeout=1.0)
+            except asyncio.TimeoutError:
+                self.reporter_task.cancel()
+
 
     def _get_full_tape_name(self, tape_name: str) -> str:
         return f"{self.tape_namespace}:{tape_name}"
@@ -122,7 +147,7 @@ class RecordReplayServer:
                 else:
                     return Response("No matching record found for replay.", status_code=500)
             except Exception as e:
-                if self.logging_enabled:
+                if self.verbose:
                     cprint(f"Unexpected error: {e}", "red", force=True)
                 return Response("Internal Server Error", status_code=500)
 
@@ -147,9 +172,9 @@ class RecordReplayServer:
     async def fetch_record_response(self, request: HttpRequest) -> Optional[TapeRecord]:
         if not self.proxied_host:
             raise ValueError("Missing proxied host")
-        record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.logging_enabled)
+        record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.verbose)
         self.add_record_to_tape(record)
-        if self.logging_enabled:
+        if self.verbose:
             print(f"Recorded: {request.method} {request.path}")
         return record
 
@@ -161,10 +186,10 @@ class RecordReplayServer:
         record = find_next_record_to_replay(matches, self.replayed_tapes)
         if record:
             self.replayed_tapes.append(record)
-            if self.logging_enabled:
+            if self.verbose:
                 print(f"Replayed: {request.method} {request.path}")
         else:
-            if self.logging_enabled:
+            if self.verbose:
                 cprint(f"Unexpected request {request.method} {request.path} has no matching record.", "yellow")
         return record
 
@@ -175,31 +200,34 @@ class RecordReplayServer:
         )
         record = find_next_record_to_replay(matches, self.replayed_tapes)
         if record:
+            self.stats_collector.record_hit()
             self.replayed_tapes.append(record)
-            if self.logging_enabled:
+            if self.verbose:
                 print(f"Replayed from mimic: {request.method} {request.path}")
             return record
         else:
+            self.stats_collector.record_miss()
             if not self.proxied_host:
                 raise ValueError("Missing proxied host for mimic mode")
-            new_record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.logging_enabled)
+            new_record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.verbose)
             self.add_record_to_tape(new_record)
-            if self.logging_enabled:
+            if self.verbose:
                 print(f"Recorded in mimic: {request.method} {request.path}")
             return new_record
 
     async def fetch_passthrough_response(self, request: HttpRequest) -> Optional[TapeRecord]:
         if not self.proxied_host:
             raise ValueError("Missing proxied host")
-        record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.logging_enabled)
-        if self.logging_enabled:
+        record = send(request, self.proxied_host, self.timeout, self.proxy_port_to_send, self.verbose)
+        if self.verbose:
             print(f"Proxied: {request.method} {request.path}")
         return record
 
     def load_tape(self, tape_name: str) -> bool:
         self.current_tape = tape_name
         self.replayed_tapes.clear()
-        cprint(f"Loaded tape: {tape_name}", "blue")
+        if self.verbose:
+            cprint(f"Loaded tape: {tape_name}", "blue")
 
         if self.mode == "record":
             self.current_tape_records = []
@@ -214,7 +242,8 @@ class RecordReplayServer:
                     self.current_tape_records = []
                     self.persistence.save_tape(self.current_tape, [])
                     return True
-                cprint(f"Tape '{tape_name}' not found.", "yellow")
+                if self.verbose:
+                    cprint(f"Tape '{tape_name}' not found.", "yellow")
                 return False
         return True
 
