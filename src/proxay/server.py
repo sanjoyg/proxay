@@ -19,7 +19,7 @@ class RecordReplayServer:
     def __init__(
         self,
         initial_mode: Mode,
-        tape_dir: str,
+        tape_namespace: Optional[str],
         default_tape_name: str,
         host: Optional[str],
         redis_host: str = "localhost",
@@ -36,6 +36,7 @@ class RecordReplayServer:
         debug_matcher_fails: bool = False,
     ):
         self.mode = initial_mode
+        self.tape_namespace = tape_namespace
         self.proxied_host = host
         self.proxy_port_to_send = proxy_port_to_send
         self.timeout = timeout
@@ -65,6 +66,12 @@ class RecordReplayServer:
         self.app = FastAPI()
         self.setup_routes()
 
+    def _get_full_tape_name(self, tape_name: str) -> str:
+        """Constructs the full tape name including the namespace."""
+        if self.tape_namespace:
+            return f"{self.tape_namespace}:{tape_name}"
+        return tape_name
+
     def setup_routes(self):
         @self.app.get("/__proxay")
         async def proxay_api_get():
@@ -73,27 +80,27 @@ class RecordReplayServer:
         @self.app.post("/__proxay/tape")
         async def proxay_api_post_tape(request: Request):
             body = await request.json()
-            tape = body.get("tape")
+            tape_name = body.get("tape")
             new_mode = body.get("mode")
 
             if new_mode and new_mode != self.mode:
                 self.mode = new_mode
                 cprint(f"Switched to mode: {self.mode}", "blue")
 
-            if tape:
-                if not self.persistence.is_tape_name_valid(tape):
-                    return Response(f"Invalid tape name: {tape}", status_code=403)
-                if self.load_tape(tape):
-                    return Response(f"Updated tape: {tape}", status_code=200)
+            if tape_name:
+                full_tape_name = self._get_full_tape_name(tape_name)
+                if not self.persistence.is_tape_name_valid(tape_name): # a short name is fine
+                    return Response(f"Invalid tape name: {tape_name}", status_code=403)
+                if self.load_tape(full_tape_name):
+                    return Response(f"Updated tape: {full_tape_name}", status_code=200)
                 else:
-                    return Response(f"Missing tape: {tape}", status_code=404)
+                    return Response(f"Missing tape: {full_tape_name}", status_code=404)
             else:
                 self.unload_tape()
                 return Response("Unloaded tape", status_code=200)
 
         @self.app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
         async def handle_request(request: Request):
-            # Reconstruct the full path with query string for matching
             path_with_query = request.url.path
             if request.url.query:
                 path_with_query += "?" + request.url.query

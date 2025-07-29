@@ -9,7 +9,6 @@ from .server import RecordReplayServer
 
 
 def rewrite_rule_type(value: str) -> RewriteRule:
-    # A simplified regex to parse sed-style s/find/replace/flags
     RE_SED_INPUT_VALIDATION = r"s/(.+?)/(.*?)/([gims]*)"
     match = re.fullmatch(RE_SED_INPUT_VALIDATION, value)
     if not match:
@@ -19,7 +18,6 @@ def rewrite_rule_type(value: str) -> RewriteRule:
 
     find_str, replace_str, flags_str = match.groups()
 
-    # Translate regex flags to Python's re module flags
     py_flags = 0
     if "i" in flags_str:
         py_flags |= re.IGNORECASE
@@ -27,14 +25,12 @@ def rewrite_rule_type(value: str) -> RewriteRule:
         py_flags |= re.MULTILINE
     if "s" in flags_str:
         py_flags |= re.DOTALL
-    # 'g' (global) is the default behavior in Python's re.sub, so it's implicit.
 
     try:
         find_regex = re.compile(find_str, py_flags)
     except re.error as e:
         raise argparse.ArgumentTypeError(f"Invalid regex '{find_str}': {e}")
 
-    # Translate sed-style backreferences (\1, \2) to Python style (\g<1>, \g<2>)
     replace_str_py = re.sub(r"\\([1-9]\d*)", r"\\g<\1>", replace_str)
 
     return RewriteRule(find=find_regex, replace=replace_str_py)
@@ -52,12 +48,12 @@ def main():
         help="Operating mode."
     )
     parser.add_argument(
-        "-t", "--tapes-dir", type=str,
-        help="Namespace for tapes in Redis (legacy parameter name, still required for non-passthrough modes)."
+        "--tape-namespace", type=str,
+        help="A required namespace for tapes in Redis (e.g., 'my-app-tests')."
     )
     parser.add_argument(
         "--default-tape", type=str, default="default",
-        help="Name of the default tape."
+        help="Name of the default tape within the namespace."
     )
     parser.add_argument(
         "--host", type=str,
@@ -67,6 +63,14 @@ def main():
         "-p", "--port", type=int, default=3000,
         help="Local port to serve on."
     )
+    parser.add_argument(
+        "--redis-host", type=str, default="localhost", help="Redis server host."
+    )
+    parser.add_argument(
+        "--redis-port", type=int, default=6379, help="Redis server port."
+    )
+
+    # Other options
     parser.add_argument(
         "--send-proxy-port", action="store_true",
         help="Sends proxy's port to the proxied host in the Host header."
@@ -87,7 +91,7 @@ def main():
     prevent_group = parser.add_mutually_exclusive_group()
     prevent_group.add_argument(
         "--drop-conditional-request-headers", action="store_true", dest="prevent_conditional_requests", default=True,
-        help="Drop If-* headers from requests in record mode to prevent 304 responses (default)."
+        help="Drop If-* headers from requests in record mode (default)."
     )
     prevent_group.add_argument(
         "--no-drop-conditional-request-headers", action="store_false", dest="prevent_conditional_requests",
@@ -102,18 +106,12 @@ def main():
         "--ignore-headers", type=lambda s: s.split(","), default=[],
         help="Comma-separated list of headers to ignore during matching."
     )
-    parser.add_argument(
-        "--redis-host", type=str, default="localhost", help="Redis server host."
-    )
-    parser.add_argument(
-        "--redis-port", type=int, default=6379, help="Redis server port."
-    )
 
     args = parser.parse_args()
 
     # --- Validations ---
-    if args.mode != "passthrough" and not args.tapes_dir:
-        cprint("Error: --tapes-dir is required for modes other than passthrough.", "red", file=sys.stderr)
+    if args.mode != "passthrough" and not args.tape_namespace:
+        cprint("Error: --tape-namespace is required for modes other than passthrough.", "red", file=sys.stderr)
         sys.exit(1)
     if args.mode not in ["replay"] and not args.host:
         cprint("Error: --host is required for record, mimic, and passthrough modes.", "red", file=sys.stderr)
@@ -127,10 +125,13 @@ def main():
 
     rewrite_rules = RewriteRules(args.rewrite_before_diff)
 
+    # Construct a namespaced tape name
+    default_tape_full_name = f"{args.tape_namespace}:{args.default_tape}" if args.tape_namespace else args.default_tape
+
     server = RecordReplayServer(
         initial_mode=args.mode,
-        tape_dir=args.tapes_dir,
-        default_tape_name=args.default_tape,
+        tape_namespace=args.tape_namespace,
+        default_tape_name=default_tape_full_name,
         host=args.host,
         proxy_port_to_send=args.port if args.send_proxy_port else None,
         redact_headers=args.redact_headers,
