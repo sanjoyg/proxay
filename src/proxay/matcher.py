@@ -1,7 +1,6 @@
 import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Set
-from urllib.parse import parse_qs, urlparse
 
 from deepdiff import DeepDiff
 from thefuzz import fuzz
@@ -9,28 +8,13 @@ from thefuzz import fuzz
 from .http import HttpRequest
 from .rewrite import RewriteRules
 from .tape import TapeRecord
+from urllib.parse import parse_qs, urlparse
 
 DEFAULT_HEADERS_TO_IGNORE = [
-    "accept",
-    "accept-encoding",
-    "age",
-    "cache-control",
-    "clear-site-data",
-    "connection",
-    "expires",
-    "from",
-    "host",
-    "postman-token",
-    "pragma",
-    "referer",
-    "referer-policy",
-    "te",
-    "trailer",
-    "transfer-encoding",
-    "user-agent",
-    "warning",
-    "x-datadog-trace-id",
-    "x-datadog-parent-id",
+    "accept", "accept-encoding", "age", "cache-control", "clear-site-data",
+    "connection", "expires", "from", "host", "postman-token", "pragma",
+    "referer", "referer-policy", "te", "trailer", "transfer-encoding",
+    "user-agent", "warning", "x-datadog-trace-id", "x-datadog-parent-id",
     "traceparent",
 ]
 
@@ -49,14 +33,11 @@ def _compare_urls(req_url: str, rec_url: str) -> float:
 
 def _compare_bodies(req_body: bytes, rec_body: bytes) -> float:
     try:
-        # Try to compare as JSON objects for more semantic comparison
         req_json = json.loads(req_body)
         rec_json = json.loads(rec_body)
         diff = DeepDiff(req_json, rec_json, ignore_order=True)
-        # Higher similarity for fewer differences
         return 1.0 - (len(diff.get("values_changed", {})) / (len(req_json) or 1))
     except (json.JSONDecodeError, TypeError):
-        # Fallback to string similarity
         return fuzz.ratio(req_body.decode("utf-8", "ignore"), rec_body.decode("utf-8", "ignore")) / 100.0
 
 
@@ -74,13 +55,13 @@ def _compare_headers(
 ) -> tuple[bool, dict]:
     ignore_lower = [h.lower() for h in ignore] + DEFAULT_HEADERS_TO_IGNORE
 
-    def filter_headers(headers: Dict) -> Dict:
-        return {k: v for k, v in headers.items() if k.lower() not in ignore_lower}
+    def filter_and_lower_keys(headers: Dict) -> Dict:
+        return {k.lower(): v for k, v in headers.items() if k.lower() not in ignore_lower}
 
-    filtered_req = filter_headers(req_headers)
-    filtered_rec = filter_headers(rec_headers)
+    filtered_req = filter_and_lower_keys(req_headers)
+    filtered_rec = filter_and_lower_keys(rec_headers)
 
-    diff = DeepDiff(filtered_req, filtered_rec, ignore_order=True, ignore_case=True)
+    diff = DeepDiff(filtered_req, filtered_rec, ignore_order=True)
     is_match = not diff
     debug_info = diff.to_dict() if debug and not is_match else {}
     return is_match, debug_info
@@ -102,7 +83,6 @@ def find_record_matches(
     for record in tape_records:
         rec_parse_result = urlparse(record.request.path)
 
-        # Rewrite paths before comparison if rules are provided
         req_path_to_compare = rewrite_before_diff_rules.rewrite(req_parse_result.path)
         rec_path_to_compare = rewrite_before_diff_rules.rewrite(rec_parse_result.path)
 
@@ -123,12 +103,9 @@ def find_record_matches(
                 matches.append(Match(record=record, similarity=1.0, exact=True))
             elif debug_matcher_fails:
                 debug_info = {"query": query_diff, "headers": headers_diff}
-                # Log this info or attach it somewhere
                 print(f"DEBUG MATCHER FAILS for {request.path}: {debug_info}")
-
-        else: # Best effort matching
+        else:
             body_similarity = _compare_bodies(request.body, record.request.body)
-            # A simple weighted average. Can be tuned.
             similarity = (body_similarity * 0.6) + (float(query_match) * 0.2) + (float(headers_match) * 0.2)
             matches.append(Match(record=record, similarity=similarity, exact=is_exact_match))
 
@@ -136,7 +113,7 @@ def find_record_matches(
 
 
 def find_next_record_to_replay(
-    matches: List[Match], replayed_tapes: Set[TapeRecord]
+    matches: List[Match], replayed_tapes: List[TapeRecord]
 ) -> TapeRecord | None:
     for match in matches:
         if match.record not in replayed_tapes:

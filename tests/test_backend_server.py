@@ -9,19 +9,12 @@ def create_test_server():
 
     @app.middleware("http")
     async def add_echo_headers(request: Request, call_next):
-        # First, get the response from the actual route
         response = await call_next(request)
-
-        # Now, add the echo headers to it
         response.headers["X-Original-Method"] = request.method
         response.headers["X-Original-Path"] = request.url.path
-
-        # Also echo back the request headers into the response headers
         for key, value in request.headers.items():
-            # Avoid overwriting critical response headers or causing issues.
             if key.lower() not in ["host", "content-length", "content-type"]:
                 response.headers[key] = value
-
         return response
 
     @app.get("/hello")
@@ -32,5 +25,17 @@ def create_test_server():
     async def post_echo(request: Request):
         body = await request.body()
         return Response(content=body, headers={"Content-Type": request.headers.get("content-type")})
+
+    @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    async def catch_all(request: Request):
+        """
+        A catch-all route to handle any requests not matched by specific routes.
+        This is needed for tests that use arbitrary paths.
+        """
+        body = await request.body()
+        return Response(
+            content=body,
+            status_code=200,
+        )
 
     return app

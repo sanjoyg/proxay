@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, Set
+from typing import List, Optional
 
 import redis
 import uvicorn
@@ -45,7 +45,6 @@ class RecordReplayServer:
         if redis_client:
             self.redis_client = redis_client
         else:
-            # decode_responses=False is the default and is what we need to work with binary msgpack data.
             self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
 
         self.persistence = Persistence(self.redis_client, self.redact_headers)
@@ -59,7 +58,7 @@ class RecordReplayServer:
 
         self.current_tape_records: List[TapeRecord] = []
         self.current_tape: str = ""
-        self.replayed_tapes: Set[TapeRecord] = set()
+        self.replayed_tapes: List[TapeRecord] = []
 
         self.load_tape(self.default_tape)
 
@@ -94,9 +93,14 @@ class RecordReplayServer:
 
         @self.app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
         async def handle_request(request: Request):
+            # Reconstruct the full path with query string for matching
+            path_with_query = request.url.path
+            if request.url.query:
+                path_with_query += "?" + request.url.query
+
             http_request = HttpRequest(
                 method=request.method,
-                path=request.url.path,
+                path=path_with_query,
                 headers={k: v for k, v in request.headers.items()},
                 body=await request.body(),
             )
@@ -115,7 +119,7 @@ class RecordReplayServer:
                     return Response("No matching record found for replay.", status_code=500)
             except Exception as e:
                 if self.logging_enabled:
-                    cprint(f"Unexpected error: {e}", "red")
+                    cprint(f"Unexpected error: {e}", "red", force=True)
                 return Response("Internal Server Error", status_code=500)
 
     def rewrite_request(self, request: HttpRequest):
@@ -136,21 +140,6 @@ class RecordReplayServer:
             return await self.fetch_passthrough_response(request)
         raise ValueError(f"Unknown mode: {self.mode}")
 
-    async def fetch_replay_response(self, request: HttpRequest) -> Optional[TapeRecord]:
-        matches = find_record_matches(
-            request, self.current_tape_records, self.rewrite_before_diff_rules,
-            self.exact_request_matching, self.debug_matcher_fails, self.ignore_headers
-        )
-        record = find_next_record_to_replay(matches, self.replayed_tapes)
-        if record:
-            self.replayed_tapes.add(record)
-            if self.logging_enabled:
-                print(f"Replayed: {request.method} {request.path}")
-        else:
-            if self.logging_enabled:
-                cprint(f"Unexpected request {request.method} {request.path} has no matching record.", "yellow")
-        return record
-
     async def fetch_record_response(self, request: HttpRequest) -> Optional[TapeRecord]:
         if not self.proxied_host:
             raise ValueError("Missing proxied host")
@@ -160,6 +149,21 @@ class RecordReplayServer:
             print(f"Recorded: {request.method} {request.path}")
         return record
 
+    async def fetch_replay_response(self, request: HttpRequest) -> Optional[TapeRecord]:
+        matches = find_record_matches(
+            request, self.current_tape_records, self.rewrite_before_diff_rules,
+            self.exact_request_matching, self.debug_matcher_fails, self.ignore_headers
+        )
+        record = find_next_record_to_replay(matches, self.replayed_tapes)
+        if record:
+            self.replayed_tapes.append(record)
+            if self.logging_enabled:
+                print(f"Replayed: {request.method} {request.path}")
+        else:
+            if self.logging_enabled:
+                cprint(f"Unexpected request {request.method} {request.path} has no matching record.", "yellow")
+        return record
+
     async def fetch_mimic_response(self, request: HttpRequest) -> Optional[TapeRecord]:
         matches = find_record_matches(
             request, self.current_tape_records, self.rewrite_before_diff_rules,
@@ -167,7 +171,7 @@ class RecordReplayServer:
         )
         record = find_next_record_to_replay(matches, self.replayed_tapes)
         if record:
-            self.replayed_tapes.add(record)
+            self.replayed_tapes.append(record)
             if self.logging_enabled:
                 print(f"Replayed from mimic: {request.method} {request.path}")
             return record
@@ -208,7 +212,7 @@ class RecordReplayServer:
                     return True
                 cprint(f"Tape '{tape_name}' not found.", "yellow")
                 return False
-        return True # Passthrough mode
+        return True
 
     def unload_tape(self):
         self.load_tape(self.default_tape)

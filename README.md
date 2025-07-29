@@ -2,85 +2,86 @@
 
 [![CircleCI](https://circleci.com/gh/airtasker/proxay.svg?style=svg)](https://circleci.com/gh/airtasker/proxay)
 
-Proxay (pronounced "prokseï") is a proxy server that helps you write faster tests. This is a full port of the original Node.js Proxay to Python 3, with a Redis-based backend for tape persistence.
+Proxay (pronounced "prokseï") is a proxy server that helps you write faster tests. This is a full port of the original Node.js Proxay to Python 3, with an optimized, Redis-based backend for tape persistence.
 
-Use Proxay as a layer between a client and its backend to record interactions and later replay them on demand.
-
-Proxay can operate in several modes:
-- **Record mode**: Proxies requests to the backend and records interactions as "tapes" in a Redis database.
-- **Replay mode**: Replays requests from your "tapes" in Redis (no backend necessary).
-- **Mimic mode**: Records requests the first time it encounters them, then replays them (record then replay).
-- **Passthrough mode**: Proxies requests without persisting them (like a conventional proxy).
-
-Proxay is language-agnostic: it's just a server. Your code doesn't need to be written in a specific language to benefit from using it.
+## Features
+- **Record mode**: Proxies requests to a backend and records interactions as "tapes" in a Redis database.
+- **Replay mode**: Replays requests from your "tapes" in Redis, no backend necessary.
+- **Mimic mode**: Records requests the first time, then replays them on subsequent calls.
+- **Passthrough mode**: A conventional proxy that doesn't persist anything.
+- **Optimized Storage**: Uses MessagePack for fast serialization and Redis Lists for efficient storage, making it much more performant than the original YAML-based file storage.
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.9+ (for local development)
+- Docker and Docker Compose (for containerized deployment)
 - A running [Redis](https://redis.io/) instance.
 
-## Installing
+## Running with Docker (Recommended)
 
-It is recommended to install the dependencies in a virtual environment.
+The easiest way to run Proxay is with Docker.
 
-```sh
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+1.  **Build the Docker image:**
+    ```sh
+    docker build -t proxay .
+    ```
 
-## Running
+2.  **Run the container:**
 
-The main command is run via `python -m src.proxay.cli`. You must have a Redis server running.
+    You need to connect the container to the same network as your backend service and Redis. Using `--network=host` is often the simplest way for local development.
 
-```sh
-# Record mode (proxies requests)
-python -m src.proxay.cli --mode record --host https://api.website.com --tapes-dir my-app-tapes
+    ```sh
+    # Example: Record mode
+    docker run --rm -it --network=host proxay \
+        --mode record \
+        --host http://localhost:8080 \
+        --tapes-dir my-app-tapes \
+        --redis-host localhost
+    ```
+    *Note: If your backend is running on the host machine from the container's perspective, you might need to use `http://host.docker.internal:PORT` instead of `http://localhost:PORT` for the `--host` argument, depending on your Docker setup.*
 
-# Replay mode (no proxying)
-python -m src.proxay.cli --mode replay --tapes-dir my-app-tapes
+## Local Development Setup
 
-# Passthrough mode (proxies requests without persisting)
-python -m src.proxay.cli --mode passthrough --host https://api.website.com
-```
+If you prefer to run the application locally without Docker:
 
-**Note on `--tapes-dir`**: In this Python version, this parameter is used as a *namespace* for tapes within Redis, not as a filesystem directory. It's a required parameter for any mode that interacts with tapes.
+1.  **Create a virtual environment:**
+    ```sh
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
 
-You can also run several instances of Proxay simultaneously on different ports (for example to proxy multiple backends). Just pick a different port (e.g. `--port 3001`).
+2.  **Install dependencies:**
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-## Specifying a tape
+3.  **Run the application:**
+    The main command is run via `python -m src.proxay.cli`.
+    ```sh
+    # Example: Record mode
+    PYTHONPATH=src python -m src.proxay.cli \
+        --mode record \
+        --host http://localhost:8080 \
+        --tapes-dir my-app-tapes
+    ```
 
-If you have several tests, you likely want to save recorded interactions into one tape per test, and replay from the correct tape for each test.
+## Specifying a Tape
 
-You can do this by sending a `POST` request to `/__proxay/tape` with the following payload:
+You can dynamically switch tapes and modes by sending a `POST` request to the `/__proxay/tape` endpoint:
 ```json
 {
-  "tape": "test1/my_tape"
+  "tape": "test-suite/my-specific-test",
+  "mode": "replay"
 }
 ```
 
-In record mode, this will create a new key `test1/my_tape` in Redis within the namespace defined by `--tapes-dir`. In replay mode, this same key will be read.
-
-## (Some) Options
-
-`--send-proxy-port`: This flag enables the forwarding of the Proxay's local port number to the proxied host in the host header.
-
-`--ignore-headers <headers>`: Allows users to specify a list of headers (comma-separated) that should be ignored by Proxay's matching algorithm during request comparison.
-
-`-r, --redact-headers <headers>`: This option enables the redaction of specific HTTP header values (comma-separated), which are replaced by `XXXX`.
-
-`--debug-matcher-fails`: When exact request matching is enabled, this flag provides some debug information on why a request did not match any recorded tape.
-
-`--redis-host <host>`: Specify the Redis host (default: `localhost`).
-
-`--redis-port <port>`: Specify the Redis port (default: `6379`).
-
-## Typical use case
-
-The use case remains the same as the original Proxay. By recording interactions and replaying them, you can create faster, more stable tests that are independent of a live backend.
-
----
-
-## Comparison with alternatives
-
-The comparisons with `node-replay`, `yakbak`, `vcr`, and `MockServer` from the original README still apply. Proxay-py's main differentiator is being a standalone proxy server, now powered by Python and Redis.
+## Options
+- `--host`: The target host to proxy requests to (e.g., `https://api.example.com`).
+- `--port`: The local port for Proxay to run on (default: `3000`).
+- `--tapes-dir`: A required namespace for your tapes in Redis.
+- `--redis-host`: The Redis server host (default: `localhost`).
+- `--redis-port`: The Redis server port (default: `6379`).
+- `--send-proxy-port`: Forwards Proxay's port in the `Host` header.
+- `--exact-request-matching`: Disables fuzzy matching and only replays exact matches.
+- `-r, --redact-headers`: A comma-separated list of request headers to redact (replace with `XXXX`).
+- `--ignore-headers`: A comma-separated list of headers to ignore during matching.
