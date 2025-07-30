@@ -1,6 +1,6 @@
 import base64
+import yaml
 
-import msgpack
 import pytest
 import requests
 
@@ -10,10 +10,10 @@ from proxay.server import RecordReplayServer, DEFAULT_TAPE_NAMESPACE
 @pytest.mark.asyncio
 async def test_record_simple_get_request(backend_server_url, proxay_server_runner, fake_redis):
     """
-    Tests that a simple GET request is recorded correctly.
+    Tests that a simple GET request is recorded correctly using YAML storage.
     """
     proxay_port = 9001
-    tape_name = "test_record"
+    tape_name = "test_record_yaml"
     full_tape_name = f"{DEFAULT_TAPE_NAMESPACE}:{tape_name}"
 
     server = RecordReplayServer(
@@ -33,15 +33,18 @@ async def test_record_simple_get_request(backend_server_url, proxay_server_runne
     assert response.status_code == 200
     assert response.text == "world"
 
+    # Verify the tape was saved to Redis correctly
     assert fake_redis.exists(full_tape_name)
-    assert fake_redis.type(full_tape_name) == b'list'
+    assert fake_redis.type(full_tape_name) == b'string'
 
-    tape_data_raw = fake_redis.lrange(full_tape_name, 0, -1)
-    assert len(tape_data_raw) == 1
+    tape_yaml = fake_redis.get(full_tape_name)
+    tape_data = yaml.safe_load(tape_yaml)
 
-    interaction = msgpack.unpackb(tape_data_raw[0], raw=False)
+    interactions = tape_data["http_interactions"]
+    assert len(interactions) == 1
 
-    request_data = interaction["request"]
+    # Verify request data
+    request_data = interactions[0]["request"]
     assert request_data["method"] == "GET"
     assert request_data["path"] == "/hello"
 
@@ -49,7 +52,8 @@ async def test_record_simple_get_request(backend_server_url, proxay_server_runne
     assert req_headers["x-test-header"] == "test-value"
     assert req_headers["user-agent"] == "XXXX"
 
-    response_data = interaction["response"]
+    # Verify response data
+    response_data = interactions[0]["response"]
     assert response_data["status"]["code"] == 200
 
     body_data = response_data["body"]

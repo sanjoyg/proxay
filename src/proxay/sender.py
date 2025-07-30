@@ -39,22 +39,14 @@ def send(
             verify=False,
         )
 
-        # The `requests` library automatically decompresses the response body.
-        # We must remove the content-encoding header to prevent our code from
-        # trying to decompress it again. We also remove content-length
-        # as it will be incorrect for the decompressed body.
-        response_headers = CaseInsensitiveDict(response.headers)
-        if "content-encoding" in response_headers:
-            del response_headers["content-encoding"]
-        if "content-length" in response_headers:
-            del response_headers["content-length"]
-
-        # Convert back to a standard dict for serialization
-        final_headers = dict(response_headers)
+        final_headers = dict(response.headers)
 
         http_response = HttpResponse(
             status=HttpStatus(code=response.status_code),
             headers=final_headers,
+            # Use response.content, which is the raw byte body if requests
+            # did not decompress, or the decompressed body if it did.
+            # Since our persistence layer does no decompression, this is safe.
             body=response.content,
         )
 

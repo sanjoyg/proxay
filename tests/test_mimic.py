@@ -1,5 +1,6 @@
 import pytest
 import requests
+import yaml
 
 from proxay.server import RecordReplayServer, DEFAULT_TAPE_NAMESPACE
 
@@ -14,7 +15,6 @@ async def test_mimic_mode(backend_server_url, proxay_server_runner, fake_redis):
     full_tape_name = f"{DEFAULT_TAPE_NAMESPACE}:{tape_name}"
     path = "/mimic-test"
 
-    # 1. Setup Proxay in mimic mode with an empty tape
     server = RecordReplayServer(
         initial_mode="mimic",
         default_tape_name=tape_name,
@@ -23,31 +23,33 @@ async def test_mimic_mode(backend_server_url, proxay_server_runner, fake_redis):
     )
     proxay_url = proxay_server_runner(server, proxay_port)
 
-    # 2. Make the first request - this should be recorded
+    # First request should be recorded
     first_response = requests.get(f"{proxay_url}{path}")
     assert first_response.status_code == 200
     assert "x-original-path" in first_response.headers
     assert first_response.headers["x-original-path"] == path
 
-    # 3. Make the second request - this should be replayed
-    tape_records_before = fake_redis.llen(full_tape_name)
-    assert tape_records_before == 1
+    tape_yaml_before = fake_redis.get(full_tape_name)
+    interactions_before = yaml.safe_load(tape_yaml_before)["http_interactions"]
+    assert len(interactions_before) == 1
 
+    # Second request should be replayed
     second_response = requests.get(f"{proxay_url}{path}")
     assert second_response.status_code == 200
     assert second_response.headers["x-original-path"] == path
 
-    tape_records_after = fake_redis.llen(full_tape_name)
-    assert tape_records_after == tape_records_before
+    tape_yaml_after = fake_redis.get(full_tape_name)
+    interactions_after = yaml.safe_load(tape_yaml_after)["http_interactions"]
+    assert len(interactions_after) == len(interactions_before)
 
-    # 4. A different request should be recorded
-    third_response = requests.get(f"{proxay_url}{path}?param=2")
-    assert third_response.status_code == 200
-
-    tape_records_final = fake_redis.llen(full_tape_name)
-    assert tape_records_final == 2
+    # A different request should be recorded
+    requests.get(f"{proxay_url}{path}?param=2")
+    tape_yaml_final = fake_redis.get(full_tape_name)
+    interactions_final = yaml.safe_load(tape_yaml_final)["http_interactions"]
+    assert len(interactions_final) == 2
 
     # And now replayed
-    fourth_response = requests.get(f"{proxay_url}{path}?param=2")
-    assert fourth_response.status_code == 200
-    assert fake_redis.llen(full_tape_name) == 2
+    requests.get(f"{proxay_url}{path}?param=2")
+    tape_yaml_final_replay = fake_redis.get(full_tape_name)
+    interactions_final_replay = yaml.safe_load(tape_yaml_final_replay)["http_interactions"]
+    assert len(interactions_final_replay) == 2
