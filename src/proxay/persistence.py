@@ -38,7 +38,8 @@ class Persistence:
         return [self._revive_tape_record(record) for record in persisted_tape_records]
 
     def is_tape_name_valid(self, tape_name: str) -> bool:
-        return ".." not in tape_name and "/" not in tape_name and "\\" not in tape_name
+        # This check is for the short name provided via the API
+        return "/" not in tape_name and "\\" not in tape_name
 
     def _redact(self, record: TapeRecord) -> TapeRecord:
         headers_lower = {h.lower() for h in self.redact_headers}

@@ -75,14 +75,12 @@ class RecordReplayServer:
 
     @asynccontextmanager
     async def lifespan(self, app: FastAPI):
-        # Startup logic
-        if self.mode == "mimic":
+        if self.mode == "mimic" and self.verbose:
             self.shutdown_event.clear()
             self.reporter_task = asyncio.create_task(
                 stats.periodic_reporter(self.stats_collector, self.shutdown_event)
             )
         yield
-        # Shutdown logic
         if self.reporter_task:
             self.shutdown_event.set()
             try:

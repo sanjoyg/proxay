@@ -44,9 +44,6 @@ def send(
         http_response = HttpResponse(
             status=HttpStatus(code=response.status_code),
             headers=final_headers,
-            # Use response.content, which is the raw byte body if requests
-            # did not decompress, or the decompressed body if it did.
-            # Since our persistence layer does no decompression, this is safe.
             body=response.content,
         )
 
