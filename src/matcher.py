@@ -1,7 +1,7 @@
 import difflib
 from typing import List, Set
 
-from src.models import HttpRequest, TapeRecord
+from .models import HttpRequest, TapeRecord
 
 
 class MatchResult:

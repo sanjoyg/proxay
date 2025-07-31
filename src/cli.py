@@ -5,9 +5,9 @@ import uvicorn
 # The server and app objects are defined in src.server
 # We need to import them and then assign the created server instance
 # to the `server` variable in that module.
-from src import server as server_module
-from src.persistence import RedisPersistence
-from src.server import RecordReplayServer
+from . import server as server_module
+from .persistence import RedisPersistence
+from .server import RecordReplayServer
 
 
 @click.command()

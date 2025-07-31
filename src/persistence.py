@@ -7,7 +7,7 @@ from typing import List, Union
 
 import redis
 
-from src.models import (
+from .models import (
     Base64PersistedBuffer,
     CompressionAlgorithm,
     HttpRequest,

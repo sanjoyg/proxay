@@ -5,9 +5,9 @@ import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from src.matcher import find_record_matches, find_next_record_to_replay
-from src.models import HttpRequest, TapeRecord
-from src.persistence import RedisPersistence
+from .matcher import find_record_matches, find_next_record_to_replay
+from .models import HttpRequest, TapeRecord
+from .persistence import RedisPersistence
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -152,11 +152,18 @@ class RecordReplayServer:
             timeout=10.0,
         )
 
+        # httpx automatically handles content-encoding, so the body is decompressed.
+        # We must remove the content-encoding header from the response we send
+        # to the client, as we are not sending a compressed body.
+        final_headers = {k.lower(): v for k, v in proxied_response.headers.items()}
+        final_headers.pop("content-encoding", None)
+        final_headers.pop("transfer-encoding", None)
+
         response_tape = TapeRecord(
             request=request,
             response={
                 "status": {"code": proxied_response.status_code},
-                "headers": dict(proxied_response.headers),
+                "headers": final_headers,
                 "body": proxied_response.content,
             },
         )
