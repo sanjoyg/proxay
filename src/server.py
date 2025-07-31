@@ -231,6 +231,7 @@ async def handle_request(request: Request, full_path: str):
         body=await request.body(),
     )
 
+    logger.info(f"Fetching response for {http_request.method} {http_request.path}")
     record = await server.fetch_response(http_request)
 
     if record:
