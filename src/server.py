@@ -109,8 +109,9 @@ class RecordReplayServer:
             self.replayed_records.append(record)
             if self.logging_enabled:
                 logger.info(f"Replayed from cache: {request.method} {request.path}")
-        elif self.logging_enabled:
-            logger.warning(f"Unexpected request, no matching record found: {request.method} {request.path}")
+        else:
+            if self.logging_enabled:
+                logger.warning(f"Unexpected request, no matching record found: {request.method} {request.path}")
 
         return record
 
@@ -121,8 +122,6 @@ class RecordReplayServer:
 
         if record:
             self.replayed_records.append(record)
-            if self.logging_enabled:
-                logger.info(f"Replayed: {request.method} {request.path}")
             return record
         else:
             return await self._fetch_record_response(request)
@@ -134,14 +133,13 @@ class RecordReplayServer:
             return None
 
         if self.logging_enabled:
-            logger.info(f"Proxied: {request.method} {request.path}")
+            logger.info(f"Proxying to backend (passthrough): {request.method} {request.path}")
         return await self._send_request(request)
 
     async def _send_request(self, request: HttpRequest) -> TapeRecord:
         """Sends the request to the proxied host."""
         url = f"{self.proxied_host}{request.path}"
 
-        # httpx needs headers as a dict of strings
         headers = {k: v if isinstance(v, str) else ','.join(v) for k, v in request.headers.items() if k.lower() not in ['host']}
 
         if self.logging_enabled:
@@ -149,13 +147,11 @@ class RecordReplayServer:
             logger.info(f"Method: {request.method}")
             logger.info(f"URL: {url}")
             logger.info(f"Headers: {headers}")
-            # Only log body if it's not too large to avoid spamming logs
             if len(request.body) < 1024:
                 logger.info(f"Body: {request.body.decode('utf-8', 'ignore')}")
             else:
                 logger.info(f"Body: (Omitted, size: {len(request.body)} bytes)")
             logger.info("------------------------------------")
-
 
         proxied_response = await self.http_client.request(
             method=request.method,
@@ -165,9 +161,6 @@ class RecordReplayServer:
             timeout=10.0,
         )
 
-        # httpx automatically handles content-encoding, so the body is decompressed.
-        # We must remove the content-encoding header from the response we send
-        # to the client, as we are not sending a compressed body.
         final_headers = {k.lower(): v for k, v in proxied_response.headers.items()}
         final_headers.pop("content-encoding", None)
         final_headers.pop("transfer-encoding", None)
@@ -182,8 +175,6 @@ class RecordReplayServer:
         )
         return response_tape
 
-
-# This will be configured and created by the CLI
 app = FastAPI()
 server: RecordReplayServer | None = None
 
@@ -218,19 +209,17 @@ async def set_tape(request: Request):
         logger.error(f"Error handling /__proxay/tape: {e}")
         return JSONResponse({"error": "Invalid request body"}, status_code=400)
 
-
 @app.get("/__proxay")
 def health_check():
     return "Proxay!"
 
-
 @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def handle_request(request: Request, full_path: str):
+    logger.info(f"--- Handling request: {request.method} {request.url.path} ---")
     global server
     if not server:
         return Response("Proxay server not initialized.", status_code=503)
 
-    # Reconstruct the path with query params
     path = f"/{full_path}"
     if request.query_params:
         path += f"?{request.query_params}"
