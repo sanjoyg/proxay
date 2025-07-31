@@ -107,8 +107,6 @@ class RecordReplayServer:
 
         if record:
             self.replayed_records.append(record)
-            if self.logging_enabled:
-                logger.info(f"Replayed from cache: {request.method} {request.path}")
         else:
             if self.logging_enabled:
                 logger.warning(f"Unexpected request, no matching record found: {request.method} {request.path}")
@@ -133,7 +131,7 @@ class RecordReplayServer:
             return None
 
         if self.logging_enabled:
-            logger.info(f"Proxying to backend (passthrough): {request.method} {request.path}")
+            logger.info(f"Proxied: {request.method} {request.path}")
         return await self._send_request(request)
 
     async def _send_request(self, request: HttpRequest) -> TapeRecord:
@@ -141,17 +139,6 @@ class RecordReplayServer:
         url = f"{self.proxied_host}{request.path}"
 
         headers = {k: v if isinstance(v, str) else ','.join(v) for k, v in request.headers.items() if k.lower() not in ['host']}
-
-        if self.logging_enabled:
-            logger.info("--- Proxying request to backend ---")
-            logger.info(f"Method: {request.method}")
-            logger.info(f"URL: {url}")
-            logger.info(f"Headers: {headers}")
-            if len(request.body) < 1024:
-                logger.info(f"Body: {request.body.decode('utf-8', 'ignore')}")
-            else:
-                logger.info(f"Body: (Omitted, size: {len(request.body)} bytes)")
-            logger.info("------------------------------------")
 
         proxied_response = await self.http_client.request(
             method=request.method,
@@ -213,9 +200,8 @@ async def set_tape(request: Request):
 def health_check():
     return "Proxay!"
 
-@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
+@app.api_route("/{full_path:path}")
 async def handle_request(request: Request, full_path: str):
-    logger.info(f"--- Handling request: {request.method} {request.url.path} ---")
     global server
     if not server:
         return Response("Proxay server not initialized.", status_code=503)
@@ -231,7 +217,6 @@ async def handle_request(request: Request, full_path: str):
         body=await request.body(),
     )
 
-    logger.info(f"Fetching response for {http_request.method} {http_request.path}")
     record = await server.fetch_response(http_request)
 
     if record:
