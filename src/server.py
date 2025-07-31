@@ -108,8 +108,8 @@ class RecordReplayServer:
         if record:
             self.replayed_records.append(record)
             if self.logging_enabled:
-                logger.info(f"Replayed: {request.method} {request.path}")
-        else:
+                logger.info(f"Replayed from cache: {request.method} {request.path}")
+        elif self.logging_enabled:
             logger.warning(f"Unexpected request, no matching record found: {request.method} {request.path}")
 
         return record
@@ -226,7 +226,6 @@ def health_check():
 
 @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def handle_request(request: Request, full_path: str):
-    logger.info(f"--- Handling request: {request.method} {request.url.path} ---")
     global server
     if not server:
         return Response("Proxay server not initialized.", status_code=503)

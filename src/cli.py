@@ -41,7 +41,13 @@ from .server import RecordReplayServer
     multiple=True,
     help="Request headers to redact (values will be replaced by XXXX). Can be specified multiple times.",
 )
-def main(mode, host, port, default_tape, redis_host, redis_port, redis_db, redact_headers):
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose logging.",
+)
+def main(mode, host, port, default_tape, redis_host, redis_port, redis_db, redact_headers, verbose):
     """
     A Python port of Proxay, a proxy server for recording and replaying HTTP interactions.
     """
@@ -75,6 +81,7 @@ def main(mode, host, port, default_tape, redis_host, redis_port, redis_db, redac
         initial_mode=mode,
         proxied_host=host,
         default_tape_name=default_tape,
+        enable_logging=verbose,
     )
 
     # 3. Inject the server instance into the server module
