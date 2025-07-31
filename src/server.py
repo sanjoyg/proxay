@@ -224,8 +224,9 @@ def health_check():
     return "Proxay!"
 
 
-@app.api_route("/{full_path:path}")
+@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def handle_request(request: Request, full_path: str):
+    logger.info(f"--- Handling request: {request.method} {request.url.path} ---")
     global server
     if not server:
         return Response("Proxay server not initialized.", status_code=503)
