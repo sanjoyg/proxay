@@ -142,7 +142,7 @@ class RecordReplayServer:
         url = f"{self.proxied_host}{request.path}"
 
         # httpx needs headers as a dict of strings
-        headers = {k: v if isinstance(v, str) else ','.join(v) for k, v in request.headers.items() if k.lower() not in ['host']}
+        headers = {k: v if isinstance(v, str) else ','.join(v) for k, v in request.headers.items()}
 
         proxied_response = await self.http_client.request(
             method=request.method,
