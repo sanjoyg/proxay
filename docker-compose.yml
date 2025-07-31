@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    # The command overrides the Dockerfile's ENTRYPOINT/CMD for more flexibility.
+    # It starts the proxy in record mode, proxying to httpbin.org,
+    # and connects to the 'redis' service on the default port.
+    command: >
+      /bin/sh -c "
+      python src/cli.py
+      --mode record
+      --host http://httpbin.org
+      --port 3000
+      --redis-host redis
+      "
+    volumes:
+      # Mount the src directory to allow for live code changes without rebuilding.
+      - ./src:/app/src
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
