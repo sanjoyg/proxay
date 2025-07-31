@@ -12,7 +12,7 @@ services:
     # and connects to the 'redis' service on the default port.
     command: >
       /bin/sh -c "
-      python src/cli.py
+      python -m src.cli
       --mode record
       --host http://httpbin.org
       --port 3000
