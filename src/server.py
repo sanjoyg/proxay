@@ -144,6 +144,19 @@ class RecordReplayServer:
         # httpx needs headers as a dict of strings
         headers = {k: v if isinstance(v, str) else ','.join(v) for k, v in request.headers.items()}
 
+        if self.logging_enabled:
+            logger.info("--- Proxying request to backend ---")
+            logger.info(f"Method: {request.method}")
+            logger.info(f"URL: {url}")
+            logger.info(f"Headers: {headers}")
+            # Only log body if it's not too large to avoid spamming logs
+            if len(request.body) < 1024:
+                logger.info(f"Body: {request.body.decode('utf-8', 'ignore')}")
+            else:
+                logger.info(f"Body: (Omitted, size: {len(request.body)} bytes)")
+            logger.info("------------------------------------")
+
+
         proxied_response = await self.http_client.request(
             method=request.method,
             url=url,
