@@ -3,15 +3,16 @@ http_interactions:
       method: POST
       path: /json/identity
       headers:
-        accept: 'application/json, text/plain, */*'
-        content-type: application/json;charset=utf-8
-        user-agent: axios/0.18.1
-        content-length: '12'
-        host: 'localhost:4000'
-        connection: close
+        accept: application/json, text/plain, */*
+        content-type: application/json
+        user-agent: axios/1.7.2
+        content-length: '58'
+        accept-encoding: gzip, compress, deflate, br
+        host: localhost:4000
+        connection: keep-alive
       body:
         encoding: utf8
-        data: '{"field3":1}'
+        data: '{"field1":{"key1":"a","key2":"b"},"field2":"c","field3":1}'
         compression: none
     response:
       status:
@@ -19,27 +20,30 @@ http_interactions:
       headers:
         x-powered-by: Express
         content-type: application/json; charset=utf-8
-        content-length: '29'
-        etag: W/"1d-VScr985hiId2x6Go7UQU+rhoiH4"
-        date: 'Wed, 10 Jul 2019 06:19:13 GMT'
-        connection: close
+        content-length: '75'
+        etag: W/"4b-fSXUVsSnPMT6ss4NVt0TCf5UAD0"
+        date: Fri, 01 Aug 2025 18:47:44 GMT
+        connection: keep-alive
+        keep-alive: timeout=5
       body:
         encoding: utf8
-        data: '{"field3":1,"requestCount":8}'
+        data: >-
+          {"field1":{"key1":"a","key2":"b"},"field2":"c","field3":1,"requestCount":1}
         compression: none
   - request:
       method: POST
       path: /json/identity
       headers:
-        accept: 'application/json, text/plain, */*'
-        content-type: application/json;charset=utf-8
-        user-agent: axios/0.18.1
-        content-length: '12'
-        host: 'localhost:4000'
-        connection: close
+        accept: application/json, text/plain, */*
+        content-type: application/json
+        user-agent: axios/1.7.2
+        content-length: '69'
+        accept-encoding: gzip, compress, deflate, br
+        host: localhost:4000
+        connection: keep-alive
       body:
         encoding: utf8
-        data: '{"field3":1}'
+        data: '{"field1":{"key1":"a","key2":"b","key3":"c"},"field2":"d","field3":1}'
         compression: none
     response:
       status:
@@ -47,11 +51,44 @@ http_interactions:
       headers:
         x-powered-by: Express
         content-type: application/json; charset=utf-8
-        content-length: '29'
-        etag: W/"1d-0K0LkiFwFoK7E4ko+TIPXZRaod4"
-        date: 'Wed, 10 Jul 2019 06:19:13 GMT'
-        connection: close
+        content-length: '86'
+        etag: W/"56-ayQ6aqlq+IJo4+J0JztUgHmeIqc"
+        date: Fri, 01 Aug 2025 18:47:44 GMT
+        connection: keep-alive
+        keep-alive: timeout=5
       body:
         encoding: utf8
-        data: '{"field3":1,"requestCount":9}'
+        data: >-
+          {"field1":{"key1":"a","key2":"b","key3":"c"},"field2":"d","field3":1,"requestCount":2}
+        compression: none
+  - request:
+      method: POST
+      path: /json/identity
+      headers:
+        accept: application/json, text/plain, */*
+        content-type: application/json
+        user-agent: axios/1.7.2
+        content-length: '58'
+        accept-encoding: gzip, compress, deflate, br
+        host: localhost:4000
+        connection: keep-alive
+      body:
+        encoding: utf8
+        data: '{"field1":{"key1":"z","key2":"a"},"field2":"d","field3":1}'
+        compression: none
+    response:
+      status:
+        code: 200
+      headers:
+        x-powered-by: Express
+        content-type: application/json; charset=utf-8
+        content-length: '75'
+        etag: W/"4b-Ji5jph0FEi0WI5LRoYtE2yWe5Y8"
+        date: Fri, 01 Aug 2025 18:47:44 GMT
+        connection: keep-alive
+        keep-alive: timeout=5
+      body:
+        encoding: utf8
+        data: >-
+          {"field1":{"key1":"z","key2":"a"},"field2":"d","field3":1,"requestCount":3}
         compression: none

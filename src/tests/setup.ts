@@ -36,6 +36,7 @@ export function setupServers({
     servers.proxy = new RecordReplayServer({
       initialMode: mode,
       tapeDir,
+      cacheStore: "file",
       defaultTapeName,
       host: TEST_SERVER_HOST,
       timeout: 100,

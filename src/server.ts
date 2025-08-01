@@ -8,7 +8,8 @@ import { ensureBuffer } from "./buffer";
 import { HttpRequest } from "./http";
 import { findNextRecordToReplay, findRecordMatches } from "./matcher";
 import { Mode } from "./modes";
-import { Persistence } from "./persistence";
+import { IPersistence, Persistence } from "./persistence";
+import { RedisPersistence } from "./redis-persistence";
 import { RewriteRules } from "./rewrite";
 import { send } from "./sender";
 import { TapeRecord } from "./tape";
@@ -18,7 +19,7 @@ import { TapeRecord } from "./tape";
  */
 export class RecordReplayServer {
   private server: net.Server;
-  private persistence: Persistence;
+  private persistence: IPersistence;
 
   private mode: Mode;
   private proxiedHost?: string;
@@ -39,6 +40,9 @@ export class RecordReplayServer {
     initialMode: Mode;
     tapeDir: string;
     defaultTapeName: string;
+    cacheStore: string;
+    redisHost?: string;
+    redisPort?: number;
     host?: string;
     proxyPortToSend?: number;
     timeout?: number;
@@ -60,7 +64,17 @@ export class RecordReplayServer {
     this.timeout = options.timeout || 5000;
     this.loggingEnabled = options.enableLogging || false;
     const redactHeaders = options.redactHeaders || [];
-    this.persistence = new Persistence(options.tapeDir, redactHeaders);
+
+    if (options.cacheStore === "redis") {
+      this.persistence = new RedisPersistence(
+        redactHeaders,
+        options.redisHost!,
+        options.redisPort!,
+      );
+    } else {
+      this.persistence = new Persistence(options.tapeDir, redactHeaders);
+    }
+
     this.defaultTape = options.defaultTapeName;
     this.preventConditionalRequests = options.preventConditionalRequests;
     this.rewriteBeforeDiffRules =
@@ -74,7 +88,6 @@ export class RecordReplayServer {
       options.debugMatcherFails === undefined
         ? false
         : options.debugMatcherFails;
-    this.loadTape(this.defaultTape);
 
     const handler = async (
       req: http.IncomingMessage,
@@ -186,6 +199,7 @@ export class RecordReplayServer {
    * Starts the server.
    */
   async start(port: number) {
+    await this.loadTape(this.defaultTape);
     await new Promise((resolve) =>
       this.server.listen(port, resolve as () => void),
     );
@@ -201,7 +215,10 @@ export class RecordReplayServer {
   /**
    * Handles requests that are intended for Proxay itself.
    */
-  private handleProxayApi(request: HttpRequest, res: http.ServerResponse) {
+  private async handleProxayApi(
+    request: HttpRequest,
+    res: http.ServerResponse,
+  ) {
     // Sending a request to /__proxay will return a 200 (so tests can identify whether
     // their backend is Proxay or not).
     if (
@@ -241,14 +258,14 @@ export class RecordReplayServer {
           res.end(errorMessage);
           return;
         }
-        if (this.loadTape(tape)) {
+        if (await this.loadTape(tape)) {
           res.end(`Updated tape: ${tape}`);
         } else {
           res.statusCode = 404;
           res.end(`Missing tape: ${tape}`);
         }
       } else {
-        this.unloadTape();
+        await this.unloadTape();
         res.end(`Unloaded tape`);
       }
       return;
@@ -348,7 +365,7 @@ export class RecordReplayServer {
         proxyPortToSend: this.proxyPortToSend,
       },
     );
-    this.addRecordToTape(record);
+    await this.addRecordToTape(record);
     if (this.loggingEnabled) {
       console.log(`Recorded: ${request.method} ${request.path}`);
     }
@@ -395,7 +412,7 @@ export class RecordReplayServer {
           proxyPortToSend: this.proxyPortToSend,
         },
       );
-      this.addRecordToTape(record);
+      await this.addRecordToTape(record);
       if (this.loggingEnabled) {
         console.log(`Recorded: ${request.method} ${request.path}`);
       }
@@ -437,7 +454,7 @@ export class RecordReplayServer {
    *
    * @returns Whether the tape was found or not (always true in record/mimic mode).
    */
-  private loadTape(tapeName: string): boolean {
+  private async loadTape(tapeName: string): Promise<boolean> {
     this.currentTape = tapeName;
     if (this.loggingEnabled) {
       console.log(chalk.blueBright(`Loaded tape: ${tapeName}`));
@@ -445,11 +462,11 @@ export class RecordReplayServer {
     switch (this.mode) {
       case "record":
         this.currentTapeRecords = [];
-        this.persistence.saveTapeToDisk(this.currentTape, []);
+        await this.persistence.saveTape(this.currentTape, []);
         return true;
       case "replay":
         try {
-          this.currentTapeRecords = this.persistence.loadTapeFromDisk(
+          this.currentTapeRecords = await this.persistence.loadTape(
             this.currentTape,
           );
           return true;
@@ -461,12 +478,12 @@ export class RecordReplayServer {
         }
       case "mimic":
         try {
-          this.currentTapeRecords = this.persistence.loadTapeFromDisk(
+          this.currentTapeRecords = await this.persistence.loadTape(
             this.currentTape,
           );
         } catch (e) {
           this.currentTapeRecords = [];
-          this.persistence.saveTapeToDisk(this.currentTape, []);
+          await this.persistence.saveTape(this.currentTape, []);
         }
         return true;
       case "passthrough":
@@ -480,16 +497,16 @@ export class RecordReplayServer {
   /**
    * Unloads the current tape, falling back to the default.
    */
-  private unloadTape() {
-    this.loadTape(this.defaultTape);
+  private async unloadTape() {
+    await this.loadTape(this.defaultTape);
   }
 
   /**
    * Adds a new record to the current tape and saves to disk.
    */
-  private addRecordToTape(record: TapeRecord) {
+  private async addRecordToTape(record: TapeRecord) {
     this.currentTapeRecords.push(record);
-    this.persistence.saveTapeToDisk(this.currentTape, this.currentTapeRecords);
+    await this.persistence.saveTape(this.currentTape, this.currentTapeRecords);
   }
 
   /**

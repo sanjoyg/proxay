@@ -54,6 +54,18 @@ async function main(argv: string[]) {
       "-t, --tapes-dir <tapes-dir>",
       "Directory in which to record/replay tapes",
     )
+    .option(
+      "--cache-store <store>",
+      "The cache store to use (file or redis)",
+      "file",
+    )
+    .option("--redis-host <host>", "The Redis host to connect to")
+    .option(
+      "--redis-port <port>",
+      "The Redis port to connect to",
+      (value) => parseInt(value, 10),
+      6379,
+    )
     .option("--default-tape <tape-name>", "Name of the default tape", "default")
     .option("-h, --host <host>", "Host to proxy (not required in replay mode)")
     .option("-p, --port <port>", "Local port to serve on", "3000")
@@ -106,6 +118,9 @@ async function main(argv: string[]) {
   const options = program.opts();
   const initialMode: string = (options.mode || "").toLowerCase();
   const tapeDir: string = options.tapesDir;
+  const cacheStore: string = options.cacheStore;
+  const redisHost: string = options.redisHost;
+  const redisPort: number = options.redisPort;
   const defaultTapeName: string = options.defaultTape;
   const host: string = options.host;
   const port = parseInt(options.port, 10);
@@ -170,9 +185,16 @@ async function main(argv: string[]) {
     );
   }
 
+  if (cacheStore === "redis" && !redisHost) {
+    panic("The --redis-host is required when using the redis cache store.");
+  }
+
   const server = new RecordReplayServer({
     initialMode,
     tapeDir,
+    cacheStore,
+    redisHost,
+    redisPort,
     host,
     proxyPortToSend: sendProxyPort ? port : undefined,
     defaultTapeName,

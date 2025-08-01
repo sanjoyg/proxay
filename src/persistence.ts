@@ -13,10 +13,16 @@ import {
 } from "./http";
 import { PersistedBuffer, PersistedTapeRecord, TapeRecord } from "./tape";
 
+export interface IPersistence {
+  saveTape(tapeName: string, tapeRecords: TapeRecord[]): Promise<void>;
+  loadTape(tapeName: string): Promise<TapeRecord[]>;
+  isTapeNameValid(tapeName: string): boolean;
+}
+
 /**
  * Persistence layer to save tapes to disk and read them from disk.
  */
-export class Persistence {
+export class Persistence implements IPersistence {
   constructor(
     private readonly tapeDir: string,
     private readonly redactHeaders: string[],
@@ -25,13 +31,13 @@ export class Persistence {
   /**
    * Saves the tape to disk.
    */
-  saveTapeToDisk(tapeName: string, tapeRecords: TapeRecord[]) {
+  async saveTape(tapeName: string, tapeRecords: TapeRecord[]): Promise<void> {
     const persistedTapeRecords = tapeRecords
       .map(this.redact, this)
       .map(persistTape);
     const tapePath = this.getTapePath(tapeName);
-    fs.ensureDirSync(path.dirname(tapePath));
-    fs.writeFileSync(
+    await fs.ensureDir(path.dirname(tapePath));
+    await fs.writeFile(
       tapePath,
       yaml.dump({
         http_interactions: persistedTapeRecords,
@@ -51,13 +57,14 @@ export class Persistence {
   /**
    * Loads the tape from disk.
    */
-  loadTapeFromDisk(tapeName: string): TapeRecord[] {
+  async loadTape(tapeName: string): Promise<TapeRecord[]> {
     const tapePath = this.getTapePath(tapeName);
-    if (!fs.existsSync(tapePath)) {
+    if (!(await fs.pathExists(tapePath))) {
       throw new Error(`No tape found with name ${tapeName}`);
     }
+    const fileContents = await fs.readFile(tapePath, "utf8");
     const persistedTapeRecords = (
-      yaml.load(fs.readFileSync(tapePath, "utf8")) as Record<string, any>
+      yaml.load(fileContents) as Record<string, any>
     ).http_interactions as PersistedTapeRecord[];
     return persistedTapeRecords.map(reviveTape);
   }
