@@ -15,7 +15,7 @@
     "start:hot": "ts-node-dev --respawn src/cli.ts",
     "test": "jest --runInBand",
     "ci:test": "jest --runInBand --ci",
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf .turbo && rm -rf dist && tsc",
     "lint:check": "yarn prettier:check && yarn tslint:check",
     "tslint:check": "tslint -p .",
     "prettier:check": "prettier --list-different \"**/*.ts\"",
