@@ -22,6 +22,9 @@ export class RecordReplayServer {
   persistence: Persistence;
 
   private mode: Mode;
+  private totalRequests = 0;
+  private cacheHits = 0;
+  private cacheMisses = 0;
   private proxiedHost?: string;
   private proxyPortToSend?: number;
   private timeout: number;
@@ -95,6 +98,11 @@ export class RecordReplayServer {
       req: http.IncomingMessage,
       res: http.ServerResponse,
     ) => {
+      this.totalRequests++;
+      if (this.totalRequests > 0 && this.totalRequests % 20 === 0) {
+        this.logStats();
+      }
+
       if (!req.url) {
         if (this.loggingEnabled) {
           console.error(chalk.red("Received a request without URL."));
@@ -334,11 +342,13 @@ export class RecordReplayServer {
       this.replayedTapes,
     );
     if (record) {
+      this.cacheHits++;
       this.replayedTapes.add(record);
       if (this.loggingEnabled) {
         console.log(`Replayed: ${request.method} ${request.path}`);
       }
     } else {
+      this.cacheMisses++;
       if (this.loggingEnabled) {
         console.warn(
           chalk.yellow(
@@ -356,6 +366,7 @@ export class RecordReplayServer {
   private async fetchRecordResponse(
     request: HttpRequest,
   ): Promise<TapeRecord | null> {
+    this.cacheMisses++;
     if (!this.proxiedHost) {
       throw new Error("Missing proxied host");
     }
@@ -398,11 +409,13 @@ export class RecordReplayServer {
       this.replayedTapes,
     );
     if (record) {
+      this.cacheHits++;
       this.replayedTapes.add(record);
       if (this.loggingEnabled) {
         console.log(`Replayed: ${request.method} ${request.path}`);
       }
     } else {
+      this.cacheMisses++;
       if (!this.proxiedHost) {
         throw new Error("Missing proxied host");
       }
@@ -434,6 +447,7 @@ export class RecordReplayServer {
   private async fetchPassthroughResponse(
     request: HttpRequest,
   ): Promise<TapeRecord | null> {
+    this.cacheMisses++;
     if (!this.proxiedHost) {
       throw new Error("Missing proxied host");
     }
@@ -529,6 +543,14 @@ export class RecordReplayServer {
       }
     });
     res.end(record.response.body);
+  }
+
+  private logStats() {
+    console.log("----------------------------------------");
+    console.log(`Total requests: ${this.totalRequests}`);
+    console.log(`Cache hits: ${this.cacheHits}`);
+    console.log(`Cache misses: ${this.cacheMisses}`);
+    console.log("----------------------------------------");
   }
 }
 
