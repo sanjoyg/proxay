@@ -350,6 +350,9 @@ export class RecordReplayServer {
     } else {
       this.cacheMisses++;
       if (this.loggingEnabled) {
+        console.log(
+          chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
+        );
         console.warn(
           chalk.yellow(
             `Unexpected request ${request.method} ${request.path} has no matching record in tapes.`,
@@ -367,6 +370,11 @@ export class RecordReplayServer {
     request: HttpRequest,
   ): Promise<TapeRecord | null> {
     this.cacheMisses++;
+    if (this.loggingEnabled) {
+      console.log(
+        chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
+      );
+    }
     if (!this.proxiedHost) {
       throw new Error("Missing proxied host");
     }
@@ -416,6 +424,11 @@ export class RecordReplayServer {
       }
     } else {
       this.cacheMisses++;
+      if (this.loggingEnabled) {
+        console.log(
+          chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
+        );
+      }
       if (!this.proxiedHost) {
         throw new Error("Missing proxied host");
       }
