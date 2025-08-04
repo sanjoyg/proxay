@@ -66,12 +66,14 @@ export class RecordReplayServer {
     const redactHeaders = options.redactHeaders || [];
 
     if (options.store === "redis") {
+      console.log("Using Redis persistence layer");
       this.persistence = new RedisPersistence(
         options.redisHost,
         options.redisPort,
         redactHeaders,
       );
     } else {
+      console.log("Using file persistence layer");
       this.persistence = new FilePersistence(options.tapeDir, redactHeaders);
     }
 

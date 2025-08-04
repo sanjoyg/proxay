@@ -18,6 +18,12 @@ export class RedisPersistence implements Persistence {
     this.client = createClient({
       url: `redis://${redisHost}:${redisPort}`,
     });
+    this.client.on("connect", () => {
+      console.info("Connecting to redis");
+    });
+    this.client.on("ready", () => {
+      console.info("Connected to redis");
+    });
     this.client.connect();
   }
 
