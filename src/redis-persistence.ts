@@ -24,6 +24,12 @@ export class RedisPersistence implements Persistence {
     this.client.on("ready", () => {
       console.info("Connected to redis");
     });
+    this.client.on("error", (err) => {
+      console.error("Redis Client Error", err);
+    });
+    this.client.on("reconnecting", () => {
+      console.info("Reconnecting to redis");
+    });
     this.client.connect();
   }
 
