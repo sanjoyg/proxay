@@ -58,7 +58,8 @@
     "fs-extra": "^11.2.0",
     "js-yaml": "^4.1.0",
     "string-similarity": "^4.0.4",
-    "unicode-properties": "^1.4.1"
+    "unicode-properties": "^1.4.1",
+    "redis": "^4.6.13"
   },
   "devDependencies": {
     "@types/content-type": "^1.1.8",

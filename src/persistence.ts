@@ -13,10 +13,16 @@ import {
 } from "./http";
 import { PersistedBuffer, PersistedTapeRecord, TapeRecord } from "./tape";
 
+export interface Persistence {
+  saveTape(tapeName: string, tapeRecords: TapeRecord[]): Promise<void>;
+  loadTape(tapeName: string): Promise<TapeRecord[]>;
+  isTapeNameValid(tapeName: string): boolean;
+}
+
 /**
  * Persistence layer to save tapes to disk and read them from disk.
  */
-export class Persistence {
+export class FilePersistence implements Persistence {
   constructor(
     private readonly tapeDir: string,
     private readonly redactHeaders: string[],
@@ -25,7 +31,7 @@ export class Persistence {
   /**
    * Saves the tape to disk.
    */
-  saveTapeToDisk(tapeName: string, tapeRecords: TapeRecord[]) {
+  async saveTape(tapeName: string, tapeRecords: TapeRecord[]) {
     const persistedTapeRecords = tapeRecords
       .map(this.redact, this)
       .map(persistTape);
@@ -51,7 +57,7 @@ export class Persistence {
   /**
    * Loads the tape from disk.
    */
-  loadTapeFromDisk(tapeName: string): TapeRecord[] {
+  async loadTape(tapeName: string): Promise<TapeRecord[]> {
     const tapePath = this.getTapePath(tapeName);
     if (!fs.existsSync(tapePath)) {
       throw new Error(`No tape found with name ${tapeName}`);

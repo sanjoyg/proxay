@@ -55,6 +55,13 @@ async function main(argv: string[]) {
       "Directory in which to record/replay tapes",
     )
     .option("--default-tape <tape-name>", "Name of the default tape", "default")
+    .option(
+      "--store <store>",
+      "Persistence store to use (file or redis)",
+      "file",
+    )
+    .option("--redis-host <host>", "Redis host", "localhost")
+    .option("--redis-port <port>", "Redis port", "6379")
     .option("-h, --host <host>", "Host to proxy (not required in replay mode)")
     .option("-p, --port <port>", "Local port to serve on", "3000")
     .option(
@@ -107,6 +114,9 @@ async function main(argv: string[]) {
   const initialMode: string = (options.mode || "").toLowerCase();
   const tapeDir: string = options.tapesDir;
   const defaultTapeName: string = options.defaultTape;
+  const store: string = (options.store || "file").toLowerCase();
+  const redisHost: string = options.redisHost;
+  const redisPort = parseInt(options.redisPort, 10);
   const host: string = options.host;
   const port = parseInt(options.port, 10);
   const sendProxyPort: boolean =
@@ -138,7 +148,11 @@ async function main(argv: string[]) {
       throw new Error(); // only used for TypeScript control flow
   }
 
-  if (!tapeDir && initialMode !== "passthrough") {
+  if (store !== "file" && store !== "redis") {
+    panic("Please specify a valid store (file or redis).");
+  }
+
+  if (store === "file" && !tapeDir && initialMode !== "passthrough") {
     panic("Please specify a path to a tapes directory.");
   }
 
@@ -186,7 +200,11 @@ async function main(argv: string[]) {
     ignoreHeaders,
     exactRequestMatching,
     debugMatcherFails,
+    store,
+    redisHost,
+    redisPort,
   });
+  await server.initialize();
   await server.start(port);
   console.log(chalk.green(`Proxying in ${initialMode} mode on port ${port}.`));
 }

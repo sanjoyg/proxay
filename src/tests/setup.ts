@@ -42,7 +42,11 @@ export function setupServers({
       enableLogging: true,
       exactRequestMatching,
       proxyPortToSend: sendProxyPort ? PROXAY_PORT : undefined,
+      store: "file",
+      redisHost: "localhost",
+      redisPort: 6379,
     });
+    await servers.proxy.initialize();
     await Promise.all([
       servers.proxy.start(PROXAY_PORT),
       servers.backend.start(TEST_SERVER_PORT),
