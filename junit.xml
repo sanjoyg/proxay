@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="109" failures="0" errors="0" time="74.291">
-  <testsuite name="convertHttpContentEncodingToCompressionAlgorithm" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:48" time="3.746" tests="22">
+<testsuites name="jest tests" tests="109" failures="0" errors="0" time="73.006">
+  <testsuite name="convertHttpContentEncodingToCompressionAlgorithm" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:07" time="3.779" tests="22">
     <testcase classname="convertHttpContentEncodingToCompressionAlgorithm maps the expected values correctly" name="convertHttpContentEncodingToCompressionAlgorithm maps the expected values correctly" time="0.005">
     </testcase>
-    <testcase classname="convertHttpContentEncodingToCompressionAlgorithm throws an exception on unexpected values" name="convertHttpContentEncodingToCompressionAlgorithm throws an exception on unexpected values" time="0.035">
+    <testcase classname="convertHttpContentEncodingToCompressionAlgorithm throws an exception on unexpected values" name="convertHttpContentEncodingToCompressionAlgorithm throws an exception on unexpected values" time="0.079">
     </testcase>
     <testcase classname="compressBuffer none handles an empty buffer correctly" name="compressBuffer none handles an empty buffer correctly" time="0.001">
     </testcase>
-    <testcase classname="compressBuffer none handles a small buffer correctly" name="compressBuffer none handles a small buffer correctly" time="0.001">
+    <testcase classname="compressBuffer none handles a small buffer correctly" name="compressBuffer none handles a small buffer correctly" time="0.002">
     </testcase>
-    <testcase classname="compressBuffer none handles a large buffer correctly" name="compressBuffer none handles a large buffer correctly" time="0.043">
+    <testcase classname="compressBuffer none handles a large buffer correctly" name="compressBuffer none handles a large buffer correctly" time="0.018">
     </testcase>
-    <testcase classname="compressBuffer gzip handles an empty buffer correctly" name="compressBuffer gzip handles an empty buffer correctly" time="0.003">
+    <testcase classname="compressBuffer gzip handles an empty buffer correctly" name="compressBuffer gzip handles an empty buffer correctly" time="0.002">
     </testcase>
-    <testcase classname="compressBuffer gzip handles a small buffer correctly" name="compressBuffer gzip handles a small buffer correctly" time="0.002">
+    <testcase classname="compressBuffer gzip handles a small buffer correctly" name="compressBuffer gzip handles a small buffer correctly" time="0.001">
     </testcase>
-    <testcase classname="compressBuffer gzip handles a large buffer correctly" name="compressBuffer gzip handles a large buffer correctly" time="0.017">
+    <testcase classname="compressBuffer gzip handles a large buffer correctly" name="compressBuffer gzip handles a large buffer correctly" time="0.016">
     </testcase>
     <testcase classname="compressBuffer br handles an empty buffer correctly" name="compressBuffer br handles an empty buffer correctly" time="0.002">
     </testcase>
     <testcase classname="compressBuffer br handles a small buffer correctly" name="compressBuffer br handles a small buffer correctly" time="0.002">
     </testcase>
-    <testcase classname="compressBuffer br handles a large buffer correctly" name="compressBuffer br handles a large buffer correctly" time="0.02">
+    <testcase classname="compressBuffer br handles a large buffer correctly" name="compressBuffer br handles a large buffer correctly" time="0.019">
     </testcase>
-    <testcase classname="compressBuffer throws an excpetion on unexpected values " name="compressBuffer throws an excpetion on unexpected values " time="0.002">
+    <testcase classname="compressBuffer throws an excpetion on unexpected values " name="compressBuffer throws an excpetion on unexpected values " time="0.001">
     </testcase>
-    <testcase classname="decompressBuffer none handles an empty buffer correctly" name="decompressBuffer none handles an empty buffer correctly" time="0.001">
+    <testcase classname="decompressBuffer none handles an empty buffer correctly" name="decompressBuffer none handles an empty buffer correctly" time="0">
     </testcase>
     <testcase classname="decompressBuffer none handles a small buffer correctly" name="decompressBuffer none handles a small buffer correctly" time="0.001">
     </testcase>
@@ -33,27 +33,27 @@
     </testcase>
     <testcase classname="decompressBuffer gzip handles an empty buffer correctly" name="decompressBuffer gzip handles an empty buffer correctly" time="0.001">
     </testcase>
-    <testcase classname="decompressBuffer gzip handles a small buffer correctly" name="decompressBuffer gzip handles a small buffer correctly" time="0.001">
+    <testcase classname="decompressBuffer gzip handles a small buffer correctly" name="decompressBuffer gzip handles a small buffer correctly" time="0">
     </testcase>
-    <testcase classname="decompressBuffer gzip handles a large buffer correctly" name="decompressBuffer gzip handles a large buffer correctly" time="0.014">
+    <testcase classname="decompressBuffer gzip handles a large buffer correctly" name="decompressBuffer gzip handles a large buffer correctly" time="0.031">
     </testcase>
-    <testcase classname="decompressBuffer br handles an empty buffer correctly" name="decompressBuffer br handles an empty buffer correctly" time="0.001">
+    <testcase classname="decompressBuffer br handles an empty buffer correctly" name="decompressBuffer br handles an empty buffer correctly" time="0">
     </testcase>
-    <testcase classname="decompressBuffer br handles a small buffer correctly" name="decompressBuffer br handles a small buffer correctly" time="0.001">
+    <testcase classname="decompressBuffer br handles a small buffer correctly" name="decompressBuffer br handles a small buffer correctly" time="0">
     </testcase>
-    <testcase classname="decompressBuffer br handles a large buffer correctly" name="decompressBuffer br handles a large buffer correctly" time="0.042">
+    <testcase classname="decompressBuffer br handles a large buffer correctly" name="decompressBuffer br handles a large buffer correctly" time="0.013">
     </testcase>
     <testcase classname="decompressBuffer throws an excpetion on unexpected values " name="decompressBuffer throws an excpetion on unexpected values " time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="Redaction" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:51" time="0.375" tests="11">
+  <testsuite name="Redaction" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:11" time="0.34" tests="11">
     <testcase classname="Redaction redacts specified headers" name="Redaction redacts specified headers" time="0.001">
     </testcase>
     <testcase classname="Persistence persists utf-8" name="Persistence persists utf-8" time="0.006">
     </testcase>
-    <testcase classname="Persistence persists binary" name="Persistence persists binary" time="0.001">
+    <testcase classname="Persistence persists binary" name="Persistence persists binary" time="0.002">
     </testcase>
-    <testcase classname="Persistence persists utf-8 encoded with brotli decompressed" name="Persistence persists utf-8 encoded with brotli decompressed" time="0">
+    <testcase classname="Persistence persists utf-8 encoded with brotli decompressed" name="Persistence persists utf-8 encoded with brotli decompressed" time="0.001">
     </testcase>
     <testcase classname="Persistence persists binary encoded with brotli still compressed" name="Persistence persists binary encoded with brotli still compressed" time="0.001">
     </testcase>
@@ -70,7 +70,7 @@
     <testcase classname="Persistence re-encodes gzip from utf-8" name="Persistence re-encodes gzip from utf-8" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="similarity" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:52" time="0.16" tests="19">
+  <testsuite name="similarity" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:12" time="0.154" tests="19">
     <testcase classname="similarity detects exact matches" name="similarity detects exact matches" time="0.003">
     </testcase>
     <testcase classname="similarity excludes mismatching methods" name="similarity excludes mismatching methods" time="0.001">
@@ -83,35 +83,35 @@
     </testcase>
     <testcase classname="similarity counts headers differences (ignoring specified ones)" name="similarity counts headers differences (ignoring specified ones)" time="0.001">
     </testcase>
-    <testcase classname="similarity dumps headers if non equal" name="similarity dumps headers if non equal" time="0.028">
+    <testcase classname="similarity dumps headers if non equal" name="similarity dumps headers if non equal" time="0.027">
     </testcase>
-    <testcase classname="similarity JSON payload types reports no differences when the paylods are the same" name="similarity JSON payload types reports no differences when the paylods are the same" time="0.001">
+    <testcase classname="similarity JSON payload types reports no differences when the paylods are the same" name="similarity JSON payload types reports no differences when the paylods are the same" time="0">
     </testcase>
-    <testcase classname="similarity JSON payload types reports differences when the payloads are different" name="similarity JSON payload types reports differences when the payloads are different" time="0.002">
+    <testcase classname="similarity JSON payload types reports differences when the payloads are different" name="similarity JSON payload types reports differences when the payloads are different" time="0.001">
     </testcase>
-    <testcase classname="similarity text payload types reports no differences when the payloads are the same" name="similarity text payload types reports no differences when the payloads are the same" time="0">
+    <testcase classname="similarity text payload types reports no differences when the payloads are the same" name="similarity text payload types reports no differences when the payloads are the same" time="0.001">
     </testcase>
-    <testcase classname="similarity text payload types reports differences when the payloads are different" name="similarity text payload types reports differences when the payloads are different" time="0.001">
+    <testcase classname="similarity text payload types reports differences when the payloads are different" name="similarity text payload types reports differences when the payloads are different" time="0">
     </testcase>
-    <testcase classname="similarity binary payload types reports no differences when the payloads are the same" name="similarity binary payload types reports no differences when the payloads are the same" time="0">
+    <testcase classname="similarity binary payload types reports no differences when the payloads are the same" name="similarity binary payload types reports no differences when the payloads are the same" time="0.001">
     </testcase>
-    <testcase classname="similarity binary payload types reports differences when the payloads are different" name="similarity binary payload types reports differences when the payloads are different" time="0.005">
+    <testcase classname="similarity binary payload types reports differences when the payloads are different" name="similarity binary payload types reports differences when the payloads are different" time="0.006">
     </testcase>
-    <testcase classname="similarity grpc-web payload types reports no differences when the payloads are the same" name="similarity grpc-web payload types reports no differences when the payloads are the same" time="0.005">
+    <testcase classname="similarity grpc-web payload types reports no differences when the payloads are the same" name="similarity grpc-web payload types reports no differences when the payloads are the same" time="0.002">
     </testcase>
     <testcase classname="similarity grpc-web payload types reports differences when the payloads are different" name="similarity grpc-web payload types reports differences when the payloads are different" time="0.001">
     </testcase>
     <testcase classname="similarity grpc-web payload types reports no differences when the payloads not different after rewrite rules" name="similarity grpc-web payload types reports no differences when the payloads not different after rewrite rules" time="0.001">
     </testcase>
-    <testcase classname="similarity grpc-web-text payload types reports no differences when the payloads are the same" name="similarity grpc-web-text payload types reports no differences when the payloads are the same" time="0">
+    <testcase classname="similarity grpc-web-text payload types reports no differences when the payloads are the same" name="similarity grpc-web-text payload types reports no differences when the payloads are the same" time="0.001">
     </testcase>
-    <testcase classname="similarity grpc-web-text payload types reports differences when the payloads are different" name="similarity grpc-web-text payload types reports differences when the payloads are different" time="0">
+    <testcase classname="similarity grpc-web-text payload types reports differences when the payloads are different" name="similarity grpc-web-text payload types reports differences when the payloads are different" time="0.001">
     </testcase>
-    <testcase classname="similarity grpc-web-text payload types reports no differences when the payloads not different after rewrite rules" name="similarity grpc-web-text payload types reports no differences when the payloads not different after rewrite rules" time="0">
+    <testcase classname="similarity grpc-web-text payload types reports no differences when the payloads not different after rewrite rules" name="similarity grpc-web-text payload types reports no differences when the payloads not different after rewrite rules" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="heuristicallyConvertProtoPayloadIntoObject" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:52" time="0.082" tests="15">
-    <testcase classname="heuristicallyConvertProtoPayloadIntoObject correctly converts a very simple case" name="heuristicallyConvertProtoPayloadIntoObject correctly converts a very simple case" time="0.002">
+  <testsuite name="heuristicallyConvertProtoPayloadIntoObject" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:12" time="0.074" tests="15">
+    <testcase classname="heuristicallyConvertProtoPayloadIntoObject correctly converts a very simple case" name="heuristicallyConvertProtoPayloadIntoObject correctly converts a very simple case" time="0.001">
     </testcase>
     <testcase classname="heuristicallyConvertProtoPayloadIntoObject correctly converts a more complex case" name="heuristicallyConvertProtoPayloadIntoObject correctly converts a more complex case" time="0.001">
     </testcase>
@@ -119,7 +119,7 @@
     </testcase>
     <testcase classname="readVarint works for a 2-byte varint" name="readVarint works for a 2-byte varint" time="0">
     </testcase>
-    <testcase classname="readVarint works for a 3-byte varint" name="readVarint works for a 3-byte varint" time="0">
+    <testcase classname="readVarint works for a 3-byte varint" name="readVarint works for a 3-byte varint" time="0.001">
     </testcase>
     <testcase classname="readI32 successfully reads a little-endian 32-bit integer" name="readI32 successfully reads a little-endian 32-bit integer" time="0.001">
     </testcase>
@@ -131,30 +131,30 @@
     </testcase>
     <testcase classname="isLikelyString returns false on invalid utf-8" name="isLikelyString returns false on invalid utf-8" time="0">
     </testcase>
-    <testcase classname="isLikelyString returns false on entirely punctuation" name="isLikelyString returns false on entirely punctuation" time="0">
+    <testcase classname="isLikelyString returns false on entirely punctuation" name="isLikelyString returns false on entirely punctuation" time="0.001">
     </testcase>
     <testcase classname="isLikelyString returns false when there&apos;s an unusual number of control characters" name="isLikelyString returns false when there&apos;s an unusual number of control characters" time="0">
     </testcase>
-    <testcase classname="isLikelyString returns true on a UUID" name="isLikelyString returns true on a UUID" time="0.001">
+    <testcase classname="isLikelyString returns true on a UUID" name="isLikelyString returns true on a UUID" time="0">
     </testcase>
-    <testcase classname="isLikelyString returns true on a some English text" name="isLikelyString returns true on a some English text" time="0.001">
+    <testcase classname="isLikelyString returns true on a some English text" name="isLikelyString returns true on a some English text" time="0">
     </testcase>
     <testcase classname="isLikelyString returns true on a some Chinese text" name="isLikelyString returns true on a some Chinese text" time="0">
     </testcase>
   </testsuite>
-  <testsuite name="getGrpcMessageFormatFromContentType" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:52" time="0.059" tests="5">
+  <testsuite name="getGrpcMessageFormatFromContentType" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:12" time="0.072" tests="5">
     <testcase classname="getGrpcMessageFormatFromContentType returns proto when no type is specified" name="getGrpcMessageFormatFromContentType returns proto when no type is specified" time="0.001">
     </testcase>
-    <testcase classname="getGrpcMessageFormatFromContentType returns the type when known type is specified" name="getGrpcMessageFormatFromContentType returns the type when known type is specified" time="0.001">
+    <testcase classname="getGrpcMessageFormatFromContentType returns the type when known type is specified" name="getGrpcMessageFormatFromContentType returns the type when known type is specified" time="0">
     </testcase>
     <testcase classname="getGrpcMessageFormatFromContentType returns other when an unknown type is specified" name="getGrpcMessageFormatFromContentType returns other when an unknown type is specified" time="0">
     </testcase>
     <testcase classname="convertGrpcWebRequestToObject json decodes a simple payload correctly" name="convertGrpcWebRequestToObject json decodes a simple payload correctly" time="0.001">
     </testcase>
-    <testcase classname="convertGrpcWebRequestToObject proto decodes a simple payload correctly" name="convertGrpcWebRequestToObject proto decodes a simple payload correctly" time="0.001">
+    <testcase classname="convertGrpcWebRequestToObject proto decodes a simple payload correctly" name="convertGrpcWebRequestToObject proto decodes a simple payload correctly" time="0">
     </testcase>
   </testsuite>
-  <testsuite name="RewriteRule" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:52" time="0.046" tests="7">
+  <testsuite name="RewriteRule" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:12" time="0.046" tests="7">
     <testcase classname="RewriteRule without capture groups applies the expected changes" name="RewriteRule without capture groups applies the expected changes" time="0.002">
     </testcase>
     <testcase classname="RewriteRule with capture groups applies the expected changes" name="RewriteRule with capture groups applies the expected changes" time="0.001">
@@ -170,84 +170,84 @@
     <testcase classname="RewriteRules when there is a more complex rewrite rule applies the expected changes on objects" name="RewriteRules when there is a more complex rewrite rule applies the expected changes on objects" time="0">
     </testcase>
   </testsuite>
-  <testsuite name="Switching tapes" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:29:52" time="9.403" tests="1">
-    <testcase classname="Switching tapes can switch between record and replay mode" name="Switching tapes can switch between record and replay mode" time="0.101">
+  <testsuite name="Switching tapes" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:12" time="9.289" tests="1">
+    <testcase classname="Switching tapes can switch between record and replay mode" name="Switching tapes can switch between record and replay mode" time="0.057">
     </testcase>
   </testsuite>
-  <testsuite name="Server inaccessible" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:02" time="5.277" tests="1">
-    <testcase classname="Server inaccessible doesn&apos;t crash when server is inaccessible" name="Server inaccessible doesn&apos;t crash when server is inaccessible" time="0.104">
+  <testsuite name="Server inaccessible" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:21" time="5.273" tests="1">
+    <testcase classname="Server inaccessible doesn&apos;t crash when server is inaccessible" name="Server inaccessible doesn&apos;t crash when server is inaccessible" time="0.084">
     </testcase>
   </testsuite>
-  <testsuite name="SendProxyPort" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:07" time="10.515" tests="2">
-    <testcase classname="SendProxyPort regular sendProxyPort mode response: hostname without port" name="SendProxyPort regular sendProxyPort mode response: hostname without port" time="0.086">
+  <testsuite name="SendProxyPort" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:26" time="10.442" tests="2">
+    <testcase classname="SendProxyPort regular sendProxyPort mode response: hostname without port" name="SendProxyPort regular sendProxyPort mode response: hostname without port" time="0.011">
     </testcase>
-    <testcase classname="SendProxyPort regular sendProxyPort mode response: hostname with port" name="SendProxyPort regular sendProxyPort mode response: hostname with port" time="0.011">
-    </testcase>
-  </testsuite>
-  <testsuite name="Replay" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:17" time="5.47" tests="5">
-    <testcase classname="Replay response: simple text" name="Replay response: simple text" time="0.055">
-    </testcase>
-    <testcase classname="Replay response: utf-8" name="Replay response: utf-8" time="0.006">
-    </testcase>
-    <testcase classname="Replay response: binary" name="Replay response: binary" time="0.005">
-    </testcase>
-    <testcase classname="Replay can pick an existing tape" name="Replay can pick an existing tape" time="0.007">
-    </testcase>
-    <testcase classname="Replay cannot pick a tape that does not exist" name="Replay cannot pick a tape that does not exist" time="0.095">
+    <testcase classname="SendProxyPort regular sendProxyPort mode response: hostname with port" name="SendProxyPort regular sendProxyPort mode response: hostname with port" time="0.008">
     </testcase>
   </testsuite>
-  <testsuite name="Record" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:23" time="5.612" tests="5">
-    <testcase classname="Record uses default tape name" name="Record uses default tape name" time="0.016">
+  <testsuite name="Replay" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:37" time="5.557" tests="5">
+    <testcase classname="Replay response: simple text" name="Replay response: simple text" time="0.017">
     </testcase>
-    <testcase classname="Record response: simple text" name="Record response: simple text" time="0.007">
+    <testcase classname="Replay response: utf-8" name="Replay response: utf-8" time="0.016">
     </testcase>
-    <testcase classname="Record response: utf-8" name="Record response: utf-8" time="0.011">
+    <testcase classname="Replay response: binary" name="Replay response: binary" time="0.011">
     </testcase>
-    <testcase classname="Record response: binary" name="Record response: binary" time="0.009">
+    <testcase classname="Replay can pick an existing tape" name="Replay can pick an existing tape" time="0.009">
     </testcase>
-    <testcase classname="Record can pick any tape" name="Record can pick any tape" time="0.004">
-    </testcase>
-  </testsuite>
-  <testsuite name="Proxay endpoint" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:28" time="5.574" tests="1">
-    <testcase classname="Proxay endpoint returns a 200 for /__proxay" name="Proxay endpoint returns a 200 for /__proxay" time="0.008">
+    <testcase classname="Replay cannot pick a tape that does not exist" name="Replay cannot pick a tape that does not exist" time="0.182">
     </testcase>
   </testsuite>
-  <testsuite name="Passthrough" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:34" time="5.594" tests="4">
-    <testcase classname="Passthrough response: simple text" name="Passthrough response: simple text" time="0.011">
+  <testsuite name="Record" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:42" time="5.289" tests="5">
+    <testcase classname="Record uses default tape name" name="Record uses default tape name" time="0.017">
+    </testcase>
+    <testcase classname="Record response: simple text" name="Record response: simple text" time="0.006">
+    </testcase>
+    <testcase classname="Record response: utf-8" name="Record response: utf-8" time="0.006">
+    </testcase>
+    <testcase classname="Record response: binary" name="Record response: binary" time="0.007">
+    </testcase>
+    <testcase classname="Record can pick any tape" name="Record can pick any tape" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="Proxay endpoint" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:48" time="5.287" tests="1">
+    <testcase classname="Proxay endpoint returns a 200 for /__proxay" name="Proxay endpoint returns a 200 for /__proxay" time="0.055">
+    </testcase>
+  </testsuite>
+  <testsuite name="Passthrough" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:53" time="5.392" tests="4">
+    <testcase classname="Passthrough response: simple text" name="Passthrough response: simple text" time="0.072">
     </testcase>
     <testcase classname="Passthrough response: utf-8" name="Passthrough response: utf-8" time="0.004">
     </testcase>
-    <testcase classname="Passthrough response: binary" name="Passthrough response: binary" time="0.004">
+    <testcase classname="Passthrough response: binary" name="Passthrough response: binary" time="0.003">
     </testcase>
-    <testcase classname="Passthrough can pick any tape" name="Passthrough can pick any tape" time="0.003">
-    </testcase>
-  </testsuite>
-  <testsuite name="Mimic" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:40" time="5.617" tests="5">
-    <testcase classname="Mimic response: simple text" name="Mimic response: simple text" time="0.016">
-    </testcase>
-    <testcase classname="Mimic response: utf-8" name="Mimic response: utf-8" time="0.007">
-    </testcase>
-    <testcase classname="Mimic response: binary" name="Mimic response: binary" time="0.01">
-    </testcase>
-    <testcase classname="Mimic only records each request once" name="Mimic only records each request once" time="0.01">
-    </testcase>
-    <testcase classname="Mimic can pick any tape" name="Mimic can pick any tape" time="0.004">
+    <testcase classname="Passthrough can pick any tape" name="Passthrough can pick any tape" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="Match requests" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:45" time="5.767" tests="4">
-    <testcase classname="Match requests Picks the best match for a given request" name="Match requests Picks the best match for a given request" time="0.066">
+  <testsuite name="Mimic" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:42:58" time="5.52" tests="5">
+    <testcase classname="Mimic response: simple text" name="Mimic response: simple text" time="0.064">
     </testcase>
-    <testcase classname="Match requests When more than one requests are the same when replaying get request Picks the request that hasn&apos;t been matched over the request has been matched" name="Match requests When more than one requests are the same when replaying get request Picks the request that hasn&apos;t been matched over the request has been matched" time="0.008">
+    <testcase classname="Mimic response: utf-8" name="Mimic response: utf-8" time="0.005">
     </testcase>
-    <testcase classname="Match requests When more than one requests are the same when replaying post request Picks the request that hasn&apos;t been matched over the request has been matched" name="Match requests When more than one requests are the same when replaying post request Picks the request that hasn&apos;t been matched over the request has been matched" time="0.008">
+    <testcase classname="Mimic response: binary" name="Mimic response: binary" time="0.008">
+    </testcase>
+    <testcase classname="Mimic only records each request once" name="Mimic only records each request once" time="0.009">
+    </testcase>
+    <testcase classname="Mimic can pick any tape" name="Mimic can pick any tape" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="Match requests without passing exactRequestMatching arguement" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:43:04" time="10.601" tests="2">
+    <testcase classname="Match requests without passing exactRequestMatching arguement Picks the best match for a given request" name="Match requests without passing exactRequestMatching arguement Picks the best match for a given request" time="0.11">
+    </testcase>
+    <testcase classname="Match requests with exactRequestMatching true Picks the best match for a given request" name="Match requests with exactRequestMatching true Picks the best match for a given request" time="0.029">
+    </testcase>
+  </testsuite>
+  <testsuite name="Match requests" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:43:15" time="5.625" tests="4">
+    <testcase classname="Match requests Picks the best match for a given request" name="Match requests Picks the best match for a given request" time="0.044">
+    </testcase>
+    <testcase classname="Match requests When more than one requests are the same when replaying get request Picks the request that hasn&apos;t been matched over the request has been matched" name="Match requests When more than one requests are the same when replaying get request Picks the request that hasn&apos;t been matched over the request has been matched" time="0.006">
+    </testcase>
+    <testcase classname="Match requests When more than one requests are the same when replaying post request Picks the request that hasn&apos;t been matched over the request has been matched" name="Match requests When more than one requests are the same when replaying post request Picks the request that hasn&apos;t been matched over the request has been matched" time="0.006">
     </testcase>
     <testcase classname="Match requests When more than one requests are the same when replaying post request when there are more requests than recorded Pick the last request" name="Match requests When more than one requests are the same when replaying post request when there are more requests than recorded Pick the last request" time="0.009">
-    </testcase>
-  </testsuite>
-  <testsuite name="Match requests without passing exactRequestMatching arguement" errors="0" failures="0" skipped="0" timestamp="2025-08-05T12:30:51" time="10.702" tests="2">
-    <testcase classname="Match requests without passing exactRequestMatching arguement Picks the best match for a given request" name="Match requests without passing exactRequestMatching arguement Picks the best match for a given request" time="0.051">
-    </testcase>
-    <testcase classname="Match requests with exactRequestMatching true Picks the best match for a given request" name="Match requests with exactRequestMatching true Picks the best match for a given request" time="0.066">
     </testcase>
   </testsuite>
 </testsuites>

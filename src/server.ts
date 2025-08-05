@@ -21,6 +21,7 @@ export class RecordReplayServer {
   private server: net.Server;
   private statsIntervalId: NodeJS.Timeout | undefined;
   private statsInterval: number;
+  private verbose: boolean;
   persistence: Persistence;
 
   private mode: Mode;
@@ -62,10 +63,12 @@ export class RecordReplayServer {
     redisHost: string;
     redisPort: number;
     statsInterval: number;
+    verbose: boolean;
   }) {
     this.currentTapeRecords = [];
     this.mode = options.initialMode;
     this.statsInterval = options.statsInterval;
+    this.verbose = options.verbose;
     this.proxiedHost = options.host;
     this.proxyPortToSend = options.proxyPortToSend;
     this.timeout = options.timeout || 5000;
@@ -73,14 +76,19 @@ export class RecordReplayServer {
     const redactHeaders = options.redactHeaders || [];
 
     if (options.store === "redis") {
-      console.log("Using Redis persistence layer");
+      if (this.verbose) {
+        console.log("Using Redis persistence layer");
+      }
       this.persistence = new RedisPersistence(
         options.redisHost,
         options.redisPort,
         redactHeaders,
+        this.verbose,
       );
     } else {
-      console.log("Using file persistence layer");
+      if (this.verbose) {
+        console.log("Using file persistence layer");
+      }
       this.persistence = new FilePersistence(options.tapeDir, redactHeaders);
     }
 
@@ -103,13 +111,13 @@ export class RecordReplayServer {
       res: http.ServerResponse,
     ) => {
       if (!req.url) {
-        if (this.loggingEnabled) {
+        if (this.verbose) {
           console.error(chalk.red("Received a request without URL."));
         }
         return;
       }
       if (!req.method) {
-        if (this.loggingEnabled) {
+        if (this.verbose) {
           console.error(chalk.red("Received a request without HTTP method."));
         }
         return;
@@ -144,7 +152,7 @@ export class RecordReplayServer {
           res.end();
         }
       } catch (e) {
-        if (this.loggingEnabled) {
+        if (this.verbose) {
           console.error(chalk.red("Unexpected error:"), e);
         }
         res.statusCode = 500;
@@ -273,7 +281,7 @@ export class RecordReplayServer {
       if (tape) {
         if (!this.persistence.isTapeNameValid(tape)) {
           const errorMessage = `Invalid tape name: ${tape}`;
-          if (this.loggingEnabled) {
+          if (this.verbose) {
             console.error(chalk.red(errorMessage));
           }
           res.statusCode = 403;
@@ -351,12 +359,12 @@ export class RecordReplayServer {
     if (record) {
       this.cacheHits++;
       this.replayedTapes.add(record);
-      if (this.loggingEnabled) {
+      if (this.verbose) {
         console.log(`Replayed: ${request.method} ${request.path}`);
       }
     } else {
       this.cacheMisses++;
-      if (this.loggingEnabled) {
+      if (this.verbose) {
         console.log(
           chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
         );
@@ -377,7 +385,7 @@ export class RecordReplayServer {
     request: HttpRequest,
   ): Promise<TapeRecord | null> {
     this.cacheMisses++;
-    if (this.loggingEnabled) {
+    if (this.verbose) {
       console.log(
         chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
       );
@@ -400,7 +408,7 @@ export class RecordReplayServer {
       },
     );
     await this.addRecordToTape(record);
-    if (this.loggingEnabled) {
+    if (this.verbose) {
       console.log(`Recorded: ${request.method} ${request.path}`);
     }
     return record;
@@ -426,12 +434,12 @@ export class RecordReplayServer {
     if (record) {
       this.cacheHits++;
       this.replayedTapes.add(record);
-      if (this.loggingEnabled) {
+      if (this.verbose) {
         console.log(`Replayed: ${request.method} ${request.path}`);
       }
     } else {
       this.cacheMisses++;
-      if (this.loggingEnabled) {
+      if (this.verbose) {
         console.log(
           chalk.yellow(`[CACHE MISS] ${request.method} ${request.path}`),
         );
@@ -454,7 +462,7 @@ export class RecordReplayServer {
         },
       );
       await this.addRecordToTape(record);
-      if (this.loggingEnabled) {
+      if (this.verbose) {
         console.log(`Recorded: ${request.method} ${request.path}`);
       }
     }
@@ -485,7 +493,7 @@ export class RecordReplayServer {
         proxyPortToSend: this.proxyPortToSend,
       },
     );
-    if (this.loggingEnabled) {
+    if (this.verbose) {
       console.log(`Proxied: ${request.method} ${request.path}`);
     }
     return record;
@@ -498,7 +506,7 @@ export class RecordReplayServer {
    */
   private async loadTape(tapeName: string): Promise<boolean> {
     this.currentTape = tapeName;
-    if (this.loggingEnabled) {
+    if (this.verbose) {
       console.log(chalk.blueBright(`Loaded tape: ${tapeName}`));
     }
     switch (this.mode) {
@@ -513,7 +521,7 @@ export class RecordReplayServer {
           );
           return true;
         } catch (e) {
-          if (this.loggingEnabled) {
+          if (this.verbose) {
             console.warn(chalk.yellow((e as Error)?.message));
           }
           return false;

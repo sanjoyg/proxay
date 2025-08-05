@@ -69,6 +69,7 @@ async function main(argv: string[]) {
     )
     .option("-h, --host <host>", "Host to proxy (not required in replay mode)")
     .option("-p, --port <port>", "Local port to serve on", "3000")
+    .option("--verbose", "Enable verbose logging")
     .option(
       "--send-proxy-port",
       "Sends the proxays port to the proxied host (helps for redirect issues)",
@@ -123,6 +124,7 @@ async function main(argv: string[]) {
   const redisHost: string = options.redisHost;
   const redisPort = parseInt(options.redisPort, 10);
   const statsInterval = parseInt(options.statsInterval, 10);
+  const verbose: boolean = options.verbose;
   const host: string = options.host;
   const port = parseInt(options.port, 10);
   const sendProxyPort: boolean =
@@ -210,6 +212,7 @@ async function main(argv: string[]) {
     redisHost,
     redisPort,
     statsInterval,
+    verbose,
   });
   await server.initialize();
   await server.start(port);

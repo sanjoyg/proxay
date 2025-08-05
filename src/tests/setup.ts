@@ -46,6 +46,7 @@ export function setupServers({
       redisHost: "localhost",
       redisPort: 6379,
       statsInterval: 60,
+      verbose: false,
     });
     await servers.proxy.initialize();
     await Promise.all([
