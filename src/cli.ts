@@ -62,6 +62,11 @@ async function main(argv: string[]) {
     )
     .option("--redis-host <host>", "Redis host", "localhost")
     .option("--redis-port <port>", "Redis port", "6379")
+    .option(
+      "--stats-interval <seconds>",
+      "Interval in seconds for printing statistics",
+      "60",
+    )
     .option("-h, --host <host>", "Host to proxy (not required in replay mode)")
     .option("-p, --port <port>", "Local port to serve on", "3000")
     .option(
@@ -117,6 +122,7 @@ async function main(argv: string[]) {
   const store: string = (options.store || "file").toLowerCase();
   const redisHost: string = options.redisHost;
   const redisPort = parseInt(options.redisPort, 10);
+  const statsInterval = parseInt(options.statsInterval, 10);
   const host: string = options.host;
   const port = parseInt(options.port, 10);
   const sendProxyPort: boolean =
@@ -203,6 +209,7 @@ async function main(argv: string[]) {
     store,
     redisHost,
     redisPort,
+    statsInterval,
   });
   await server.initialize();
   await server.start(port);

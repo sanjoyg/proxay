@@ -19,6 +19,8 @@ import { TapeRecord } from "./tape";
  */
 export class RecordReplayServer {
   private server: net.Server;
+  private statsIntervalId: NodeJS.Timeout | undefined;
+  private statsInterval: number;
   persistence: Persistence;
 
   private mode: Mode;
@@ -59,9 +61,11 @@ export class RecordReplayServer {
     store: string;
     redisHost: string;
     redisPort: number;
+    statsInterval: number;
   }) {
     this.currentTapeRecords = [];
     this.mode = options.initialMode;
+    this.statsInterval = options.statsInterval;
     this.proxiedHost = options.host;
     this.proxyPortToSend = options.proxyPortToSend;
     this.timeout = options.timeout || 5000;
@@ -98,11 +102,6 @@ export class RecordReplayServer {
       req: http.IncomingMessage,
       res: http.ServerResponse,
     ) => {
-      this.totalRequests++;
-      if (this.totalRequests > 0 && this.totalRequests % 20 === 0) {
-        this.logStats();
-      }
-
       if (!req.url) {
         if (this.loggingEnabled) {
           console.error(chalk.red("Received a request without URL."));
@@ -212,12 +211,19 @@ export class RecordReplayServer {
     await new Promise((resolve) =>
       this.server.listen(port, resolve as () => void),
     );
+    this.statsIntervalId = setInterval(
+      () => this.logStats(),
+      this.statsInterval * 1000,
+    );
   }
 
   /**
    * Stops the server.
    */
   async stop() {
+    if (this.statsIntervalId) {
+      clearInterval(this.statsIntervalId);
+    }
     await new Promise((resolve) => this.server.close(resolve));
   }
 
@@ -310,6 +316,7 @@ export class RecordReplayServer {
   private async fetchResponse(
     request: HttpRequest,
   ): Promise<TapeRecord | null> {
+    this.totalRequests++;
     switch (this.mode) {
       case "replay":
         return this.fetchReplayResponse(request);
@@ -559,11 +566,17 @@ export class RecordReplayServer {
   }
 
   private logStats() {
+    if (this.totalRequests === 0) {
+      return;
+    }
     console.log("----------------------------------------");
     console.log(`Total requests: ${this.totalRequests}`);
     console.log(`Cache hits: ${this.cacheHits}`);
     console.log(`Cache misses: ${this.cacheMisses}`);
     console.log("----------------------------------------");
+    this.totalRequests = 0;
+    this.cacheHits = 0;
+    this.cacheMisses = 0;
   }
 }
 
